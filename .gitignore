@@ -1,4 +1,5 @@
-.claude
-.copilot
-.codex
-.env
+.claude/
+.copilot/
+.codex/
+.env/
+.internal/
