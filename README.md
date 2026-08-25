@@ -34,7 +34,7 @@ src/petinterp/         the installable package — all functional code
   evaluation/          metric implementations (each metric exists exactly once)
 baselines/             RIFE / SAINT / I3Net (+ FILM) as separate modules,
                        each behind the shared evaluate.py interface
-configs/               experiment YAMLs, phase-prefixed: p1_unet_k2.yaml
+configs/               experiment YAMLs, phase-prefixed: p4_unet_k2.yaml
 scripts/               make_tables.py, make_figures.py, evaluate.py
 splits/                frozen patient-level split JSONs (immutable)
 results/               one subdir per exp_id, each with metrics.json
