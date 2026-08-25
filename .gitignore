@@ -3,3 +3,8 @@
 .codex/
 .env/
 .internal/
+# medical volumes — hundreds of MB, never in git
+*.nii
+*.nii.gz
+*.dcm
+*.DCM
