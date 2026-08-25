@@ -8,3 +8,9 @@
 *.nii.gz
 *.dcm
 *.DCM
+*.zip
+
+# local data + scratch outputs + venv
+data/
+outputs/
+.venv/
