@@ -1,0 +1,21 @@
+# Per-machine path roots. Copy to paths.local.yaml (gitignored) and edit for this machine.
+#
+# Configs address everything relative to these roots, so one config YAML runs unchanged on
+# Colab, on a GPU laptop and on the Mac. Nothing in configs/ ever names an absolute path.
+
+# Where the heavy stuff lives: data/, runs/, cache/.
+# Colab (shared Drive folder, via "Add shortcut to My Drive"):
+#   /content/drive/MyDrive/PETInterp
+# GPU laptop:
+#   D:/petinterp        or  /home/<user>/petinterp
+# Mac (small sample cohort only — no real training here):
+#   ~/Desktop/graduation-project/data
+data_root: /content/drive/MyDrive/PETInterp
+
+# Optional. Defaults to <data_root>/runs. Point it elsewhere to keep run archives on a
+# different disk than the data.
+# runs_root: /content/drive/MyDrive/PETInterp/runs
+
+# Optional. Defaults to <data_root>/cache. Holds the pip wheel cache that keeps a fresh
+# Colab runtime's setup cell fast.
+# cache_root: /content/drive/MyDrive/PETInterp/cache

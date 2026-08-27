@@ -10,6 +10,9 @@
 *.DCM
 *.zip
 
+# per-machine path roots — every machine has its own
+paths.local.yaml
+
 # local data + scratch outputs + venv
 data/
 outputs/

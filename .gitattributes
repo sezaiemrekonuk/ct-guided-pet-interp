@@ -1,0 +1,4 @@
+# Notebooks are committed with outputs stripped (CLAUDE.md rule 11). Run `nbstripout --install`
+# once per machine to register the filter; without it this line is inert and outputs get
+# committed.
+*.ipynb filter=nbstripout

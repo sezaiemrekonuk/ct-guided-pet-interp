@@ -19,15 +19,20 @@ Always apply measurement consistency, in the loss or after inference:
    N is its phase directory under `docs/phases/` (0–6, the only phase numbering this repo uses) —
    the 2.5D U-Net at k=2 is `p4_unet_k2.yaml`. No hard-coded parameters leak into code: paths,
    hyperparameters, seeds, degradation factors and split file names all come from the config.
-   A run is reproducible from its YAML alone.
+   A run is reproducible from its YAML alone. The config carries the `exp_id`, and every run
+   archives its own config snapshot, git SHA and a working-tree `dirty` flag into
+   `runs/<exp_id>/` — a run made on a dirty tree cannot go into the paper, because nobody can
+   say which code produced it.
 
 2. **Metrics in, tables out.** Every experiment writes `results/<exp_id>/metrics.json`;
    `scripts/make_tables.py` turns those into `paper/tables/` as CSV and LaTeX (booktabs). Tables
-   are NEVER written by hand — a wrong number is fixed in the metrics or the generator.
+   are NEVER written by hand — a wrong number is fixed in the metrics or the generator. An
+   analysis notebook calls that generator; it never grows its own copy of it.
 
 3. **Figures are generated.** Comparison figures (axial / coronal / sagittal + error map + lesion
    zoom) come from `scripts/make_figures.py` into `paper/figures/` as 300-dpi PDFs. No
-   screenshots, no manual cropping.
+   screenshots, no manual cropping, and no figure assembled inside a notebook cell — the
+   notebook calls the generator and displays what comes back.
 
 4. **`paper/references.bib` is live.** The moment a method, baseline, dataset or tool is used, its
    BibTeX entry is added — not at writing time. Datasets use the mandatory citation format on
@@ -43,27 +48,61 @@ Always apply measurement consistency, in the loss or after inference:
 
 6. **Baselines share one interface.** RIFE, FILM, SAINT and I3Net are separate modules under
    `baselines/`, all driven through `scripts/evaluate.py` (input: LR volume + CT, output: HR
-   volume). Metric code exists exactly once, in `src/petinterp/evaluation/` — a baseline never
-   carries its own PSNR/SSIM. Baselines are retrained under OUR averaging degradation, our split
+   volume). Metric code exists exactly once, in `src/petinterp/evaluation/` — neither a
+   baseline nor a notebook carries its own PSNR/SSIM. Baselines are retrained under OUR averaging degradation, our split
    and our metric code, never their published decimation protocol, or the comparison is unfair.
 
 7. **Splits and seeds are immutable.** `splits/*.json` and degradation seeds are frozen once
    written. A change means a NEW versioned file (`split_v2.json`) plus a rationale entry in the
-   experiment log. Never edit an existing split file in place. Splits are 70/10/20, patient-level,
+   experiment log. Never edit an existing split file in place. The same applies to derived data
+   on Drive: `data/processed/v1/` and `data/degraded/v1/` are frozen once written, each carries a
+   `manifest.json` (config snapshot, config hash, date, patient count, exclusions), and a change
+   creates `v2` rather than overwriting `v1`. Splits are 70/10/20, patient-level,
    stratified by lesion presence. Degraded test volumes are generated once and written to disk —
    never re-sampled per epoch; a fixed seed alone does not guarantee this.
 
-8. **Everything resumes.** All training supports resume-from-checkpoint; Colab disconnects are the
-   normal working mode. Checkpoints go to Drive every epoch and include optimizer state, epoch,
-   RNG state and the config hash.
+8. **Everything long resumes — not just training.** Colab disconnects, quota exhaustion and the
+   session ceiling are the normal working mode; a one-shot run that restarts from zero is
+   unaffordable. Two mechanisms, never conflated:
+   - **Splittable stages** (preprocessing, degradation, inference, metrics) write one output file
+     per patient and skip what already exists — the filesystem is the checkpoint. Prefer this
+     wherever a stage can be split at all.
+   - **Training** writes a checkpoint every epoch to Drive: model, optimizer, scheduler, epoch,
+     RNG state and the config hash. `max_session_hours` in the config stops the loop cleanly when
+     the session budget runs out; re-running the same cell continues from the last epoch.
+
+   **Every write is atomic**: write `<name>.tmp`, then `os.replace` onto the final name. Without
+   it, a runtime killed mid-write leaves a truncated file that *exists*, is therefore skipped on
+   the next pass, and enters training as silently corrupt data.
 
 9. **Milestones update the docs.** At each milestone, update the corresponding phase README under
    `docs/phases/` and the relevant draft section under `paper/draft/`. Then tag
    `phase-X-complete`, X matching that same 0–6 numbering.
 
-10. **Code by function, docs by phase.** Code is organized by function under `src/petinterp/`,
-    never by phase. Phase directories under `docs/` hold narrative and evidence only, importing
-    from `src/petinterp` rather than duplicating code.
+10. **Code by function, docs by phase, notebooks by job.** Code is organized by function under
+    `src/petinterp/`, never by phase. Phase directories under `docs/` hold narrative and evidence
+    only, importing from `src/petinterp` rather than duplicating code. Notebooks are named for
+    the job they do, never for the phase or the experiment they happen to serve.
+
+11. **Colab is the execution surface, and a notebook holds no logic.** Every run starts from a
+    notebook: `notebooks/pipeline/` for the config-driven tools (inspect, preprocess, degrade,
+    train, evaluate), `notebooks/analysis/` for paper assets — one notebook per section or
+    figure, created when the result it describes exists, never pre-created empty. A cell may
+    contain setup, config selection, a call into `src/petinterp` and display; a `def` or `class`
+    in a cell is forbidden and moves to `src/` before the commit. Notebooks are committed with
+    outputs stripped; the executed copy goes to `runs/<exp_id>/notebook.html` on Drive. The
+    reference environment is a Colab GPU — TPU is not supported and no `torch_xla` path is
+    opened. The Mac is for development and smoke runs only; the 4070/5080 are optional and run
+    the same configs through a different `paths.local.yaml`.
+
+12. **Drive is the root of heavy I/O, and configs never name a machine path.** Data, checkpoints
+    and run archives live in the shared `PETInterp/` Drive folder; the repository carries no
+    data. Configs address everything relative to a root, and the root comes from the gitignored
+    `paths.local.yaml`, so one config runs unchanged on Colab, on a GPU laptop and on the Mac.
+    Each run gets `runs/<exp_id>/` on Drive holding `config.yaml`, `provenance.json`, an
+    append-only `log.txt`, `checkpoints/`, `metrics.json` and `notebook.html`. `metrics.json` is
+    additionally committed under `results/<exp_id>/` so the table generator runs from a git
+    checkout alone, with no Drive access.
 
 ## Domain guardrails
 
@@ -98,3 +137,8 @@ Non-negotiable. Violating one invalidates the experiment, not just the code.
 `docs/problem-definition.md` is the reference framing document — clinical motivation, dataset
 choices, the model ladder, literature baselines, rejected alternatives. Read it before writing
 paper text or when a design decision needs justification.
+
+`docs/superpowers/specs/2026-08-27-colab-first-workflow-design.md` is the reference document for
+rules 8, 11 and 12 — why the code is cloned rather than kept on Drive, why notebooks split into
+`pipeline/` and `analysis/`, why resume is two mechanisms, and what was rejected on the way. Read
+it before changing how a run is launched, stored or resumed.
