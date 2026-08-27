@@ -189,8 +189,14 @@ planned separately.
 
 ## Open items
 
-- The GitHub token for cloning a private repository in Colab: to be stored in Colab Secrets and
-  read with `google.colab.userdata`. Decided when the first notebook is written.
+None. Both items raised on 2026-08-27 were resolved the same day:
+
+- **Cloning in Colab.** The repository is public, so the setup cell clones anonymously and no
+  token is involved. Should it ever go private, the route is a fine-grained GitHub token scoped
+  to this repository with `Contents: Read` only, stored in Colab Secrets and read with
+  `google.colab.userdata`. Because the repository is public, nothing identifying may be
+  committed — `.gitignore` already blocks the volume formats, and patient IDs, hospital paths and
+  institutional notes must stay out of configs, logs and the experiment log.
 *(Resolved 2026-08-27: output stripping goes through a committed `.pre-commit-config.yaml`
 running `nbstripout`. The `.gitattributes` filter was dropped rather than kept alongside it —
 two mechanisms doing the same job is how one of them silently stops working.)*
