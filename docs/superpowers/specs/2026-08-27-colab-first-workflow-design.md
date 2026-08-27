@@ -174,7 +174,7 @@ notebooks/pipeline/        00_inspect, 01_preprocess, 02_degrade, 03_train, 04_e
 notebooks/analysis/        one notebook per paper section, created on demand
 src/petinterp/runtime.py   start(), path resolution, run archive, resume helpers
 paths.local.example.yaml   committed template; copied to gitignored paths.local.yaml
-.gitattributes             *.ipynb filter=nbstripout
+.pre-commit-config.yaml    nbstripout, so notebook outputs never reach a commit
 ```
 
 CLAUDE.md gains two rules (Colab as the execution surface; Drive as the I/O root), rewrites
@@ -191,5 +191,6 @@ planned separately.
 
 - The GitHub token for cloning a private repository in Colab: to be stored in Colab Secrets and
   read with `google.colab.userdata`. Decided when the first notebook is written.
-- Whether `nbstripout` is installed via a committed `.pre-commit-config.yaml` or by each person
-  running `nbstripout --install` once. Decided when the first notebook is committed.
+*(Resolved 2026-08-27: output stripping goes through a committed `.pre-commit-config.yaml`
+running `nbstripout`. The `.gitattributes` filter was dropped rather than kept alongside it —
+two mechanisms doing the same job is how one of them silently stops working.)*

@@ -102,3 +102,8 @@ Deliberately not done: no `runtime.py`, no notebooks, no data touched. This was 
 ground rules, and the full reasoning — including the alternatives I rejected — is written up in
 `docs/superpowers/specs/2026-08-27-colab-first-workflow-design.md`. CLAUDE.md picked up rules 11
 and 12, and rule 8 was rewritten.
+
+Later the same day I settled output stripping on `pre-commit` with the `nbstripout` hook, and
+dropped the `.gitattributes` filter I had added alongside it. Both do the same job; keeping both
+means one of them quietly stops working and nobody notices which. The config is committed, so
+Seçkin gets it with a `pre-commit install` instead of a setup instruction he has to remember.

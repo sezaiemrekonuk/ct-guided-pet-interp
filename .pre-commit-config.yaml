@@ -1,0 +1,9 @@
+# Strips notebook outputs before they reach a commit (CLAUDE.md rule 11). Executed notebooks
+# are archived to runs/<exp_id>/notebook.html on Drive instead, so nothing is lost.
+#
+# Install once per machine:  pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout

@@ -93,7 +93,7 @@ change makes `v2`, it never edits `v1`.
 2. `cp paths.local.example.yaml paths.local.yaml` and set the root for this machine.
 3. On Colab, add a shortcut to the shared `PETInterp/` folder in My Drive so it mounts at
    `/content/drive/MyDrive/PETInterp`.
-4. Run `nbstripout --install` once, so notebook outputs are stripped on commit.
+4. `pip install pre-commit && pre-commit install`, so notebook outputs are stripped on commit.
 
 ### Long runs and disconnects
 
