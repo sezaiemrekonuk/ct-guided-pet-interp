@@ -107,3 +107,22 @@ Later the same day I settled output stripping on `pre-commit` with the `nbstripo
 dropped the `.gitattributes` filter I had added alongside it. Both do the same job; keeping both
 means one of them quietly stops working and nobody notices which. The config is committed, so
 Seçkin gets it with a `pre-commit install` instead of a setup instruction he has to remember.
+
+---
+
+## 2026-09-29 — Our advisor suggests looking at foundation models
+
+In today's meeting our advisor suggested we might fine-tune a foundation model for this problem,
+or build something on top of one, instead of only training our own networks from scratch. I'm
+writing it down now so it doesn't get lost. We haven't decided anything and we haven't looked at
+any specific model yet.
+
+For me the open question is where a foundation model would actually fit in our ladder. It could
+be a pretrained encoder that replaces the CT branch. It could be a pretrained backbone we
+fine-tune for the interpolation itself. Or it could be a baseline we run as-is. Whichever it is,
+the rules we already have still apply: training and testing use our averaging degradation, our
+split and our metric code, measurement consistency goes on the output, and we don't use
+adversarial losses. Before this goes into the plan I want a short list of candidate models, what
+each was pretrained on, and whether it can take a PET/CT slab at all. The classical baseline
+and the no-CT vs CT early-fusion U-Net come first either way, because a foundation model only
+means something once we have those numbers to compare it against.
