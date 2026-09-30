@@ -1,0 +1,6 @@
+# Frozen thick-slice PET by slice averaging (never decimation), for every split patient.
+exp_id: p2_degrade_v1
+input: data/processed/v1
+split_file: split_v1.json
+output: data/degraded/v1
+k: [2, 3, 4]

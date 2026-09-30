@@ -1,0 +1,10 @@
+# Classical baseline: cubic spline along z through the thick-slice centres. No CT, no training.
+exp_id: p3_cubic_k2
+model:
+  name: cubic_z
+k: 2
+processed: data/processed/v1
+degraded: data/degraded/v1
+split_file: split_v1.json
+subset: test
+bladder_label: 21                     # TotalSegmentator urinary_bladder, in organs.nii.gz

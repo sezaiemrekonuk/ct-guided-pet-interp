@@ -126,3 +126,49 @@ adversarial losses. Before this goes into the plan I want a short list of candid
 each was pretrained on, and whether it can take a PET/CT slab at all. The classical baseline
 and the no-CT vs CT early-fusion U-Net come first either way, because a foundation model only
 means something once we have those numbers to compare it against.
+
+---
+
+## 2026-09-30 — The first real pipeline: preprocessing, degradation, metrics and a cubic baseline
+
+Today the repository went from rules to a pipeline you can actually run. There's a download
+notebook that pulls all five DEEP-PSMA zips (about 24 GB, CC BY-NC 4.0) from Zenodo onto the
+shared Drive, and behind it preprocessing, the averaging degradation, the metric code and the
+first baseline. Nothing has run on the real data yet; everything below was only checked on
+synthetic volumes. I'm writing the choices down now because every number we report later
+depends on them.
+
+Preprocessing reads each PSMA case straight out of the zips rather than unzipping onto Drive,
+and it writes one folder per patient with `qc.json` written last, so a crash costs one patient.
+CT is resampled onto the PET grid with linear interpolation (air, −1000 HU, as the fill value),
+and the TTB and TotalSegmentator labels go onto the same grid with nearest neighbour. The body
+mask is the largest connected component of CT above −500 HU, with holes filled slice by slice.
+The QC gate excludes on PET/CT direction mismatch, non-finite or negative SUV, fewer than 40
+slices, or an orientation that differs from the rest of the cohort. The liver range and the
+kidney/bladder ordering are recorded as flags only, not exclusions. The liver question from
+August is still open, and this run is where we'll finally see the whole-cohort distribution.
+
+One place where I had to depart from the letter of our rules is the split. CLAUDE.md says to
+stratify by lesion presence, but every DEEP-PSMA case has measurable disease, so that strata
+would be empty. Instead I stratify by tertile of total tumour volume, which keeps the burden
+distribution the same across train, val and test. The split is 70/10/20 at patient level, with
+seed 20260930, and once written it is frozen: the code refuses to overwrite an existing split
+file that differs.
+
+For degradation, a thick slice is the mean of k thin ones, and the thin volume is cropped to a
+multiple of k at the high-index end. That cropped native 2 mm volume is the ground truth. This
+also corrects something I wrote on 26 August. There I said k=2 meant synthesising 1 mm slices,
+but under the averaging protocol it's the other way round: we average 2 mm slices down to 2k mm
+and synthesise back to the native 2 mm. So our target is a real acquisition after all.
+
+A few metric definitions need to be stated in the paper. Global metrics are computed inside the
+body mask. PSNR and SSIM use each patient's ground-truth SUVmax inside the body as the data
+range. SSIM is 3D with a Gaussian window of σ = 1.5 voxels. NRMSE is the error norm divided by
+the ground-truth norm. Lesions are the 26-connected components of TTB. A lesion is small below
+1 mL and bladder-adjacent within 20 mm of the TotalSegmentator bladder. Every model is scored
+twice, raw and after the measurement-consistency projection, so the consistency ablation comes
+for free with every run.
+
+The first baseline is a cubic spline along z through the thick-slice centres, which sit at thin
+index i·k + (k−1)/2. Runs are `p3_cubic_k2`, `_k3` and `_k4`. This is the floor every learned
+model has to clear, and it's also the end-to-end test of the metric code.

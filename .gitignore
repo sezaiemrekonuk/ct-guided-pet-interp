@@ -17,3 +17,7 @@ paths.local.yaml
 /data/
 outputs/
 .venv/
+
+# python build/cache
+__pycache__/
+*.egg-info/

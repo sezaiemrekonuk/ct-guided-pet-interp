@@ -1,0 +1,20 @@
+# DEEP-PSMA PSMA cases -> data/processed/v1 + splits/split_v1.json. Frozen once complete.
+exp_id: p1_preprocess_deep_psma
+source:
+  archives: data/raw/deep_psma        # the zips from download.ipynb, read in place
+  tracer: PSMA
+output: data/processed/v1
+body_mask_hu: -500                    # CT threshold for the body mask, on the PET grid
+qc:
+  min_slices: 40
+  liver_suvmean_range: [4.0, 8.0]     # flag only, not an exclusion (log 2026-08-26)
+labels:                               # TotalSegmentator v2 'total' ids in totseg_24.nii.gz
+  kidney_right: 2
+  kidney_left: 3
+  liver: 5
+  urinary_bladder: 21
+split:
+  file: splits/split_v1.json
+  seed: 20260930
+  fractions: [0.7, 0.1, 0.2]
+  strata: 3                           # TTB-volume tertiles
