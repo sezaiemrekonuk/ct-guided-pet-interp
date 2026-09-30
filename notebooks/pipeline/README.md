@@ -5,6 +5,7 @@ times with different configs:
 
 | Notebook | Job |
 | --- | --- |
+| `download.ipynb` | fetch a public dataset (DEEP-PSMA / Zenodo) onto Drive, resumable |
 | `00_inspect.ipynb` | geometry and SUV sanity check on one case |
 | `01_preprocess.ipynb` | DICOM → NIfTI, SUV conversion, QC gate, CT onto the PET grid, body mask, splits |
 | `02_degrade.ipynb` | frozen LR volumes by slice averaging |

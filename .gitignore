@@ -14,6 +14,6 @@
 paths.local.yaml
 
 # local data + scratch outputs + venv
-data/
+/data/
 outputs/
 .venv/
