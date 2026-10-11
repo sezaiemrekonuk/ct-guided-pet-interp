@@ -106,6 +106,23 @@ def start(config: str) -> Run:
     return run
 
 
+def archive_notebook(dest: Path) -> None:
+    """The running Colab notebook, outputs included -> dest/notebook.html (rule 11).
+
+    Takes a directory, not a Run: re-starting an old run just to archive it would overwrite its
+    provenance.json with the current commit.
+    """
+    import nbformat
+    from google.colab import _message
+    from nbconvert import HTMLExporter
+
+    nb = _message.blocking_request("get_ipynb", timeout_sec=120)["ipynb"]
+    html, _ = HTMLExporter().from_notebook_node(nbformat.from_dict(nb))
+    tmp = Path(dest) / "notebook.html.tmp"
+    tmp.write_text(html, encoding="utf-8")
+    os.replace(tmp, Path(dest) / "notebook.html")
+
+
 def _gpu() -> str:
     try:
         import torch

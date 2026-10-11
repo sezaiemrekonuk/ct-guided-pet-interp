@@ -265,3 +265,27 @@ extra cells in the same Colab session (to avoid a second Drive authorisation), s
 notebooks don't show those two calls. The calls were `train(rt.start('configs/p4_unet_noct_k2.yaml'))`
 and `evaluate(rt.start(c))` for the three configs; the configs and the commit fully determine the
 runs.
+
+---
+
+## 2026-10-11 (evening) — Is "CT doesn't help" real? Two more seeds per arm
+
+The afternoon's surprise rests on one training run per arm, so before I build anything on it I
+want to know how much of the gap is just the seed. I'm repeating both arms twice more at k = 2:
+`p4_unet_k2_s2`/`_s3` and `p4_unet_noct_k2_s2`/`_s3`, identical to the pilot configs except for
+`train.seed` (20261012 and 20261013; the pilot used 20261011). The seed changes the weight
+initialisation, the order of the training blocks and the random crops and flips, and nothing
+else. The data, split, degradation and test set stay fixed. The runs go in pairs, CT then
+no-CT for seed 2 and then for seed 3, each evaluated straight after it trains. That way, if
+Colab's quota runs out halfway, what's finished is still a matched pair.
+
+What I'll look at: for each arm, the mean and spread of the test metrics across the three seeds,
+and whether the CT-vs-no-CT difference keeps the same sign in every seed. I'll also average each
+patient's metrics over the three seeds and rerun the patient-paired Wilcoxon test on those
+averages, which takes most of the seed noise out of the comparison. My expectation, written down
+before seeing anything: the two arms will overlap, and early-fused CT will turn out to make no
+measurable difference at k = 2. If the no-CT arm wins all three seeds, that is a stronger and
+more interesting finding, and I'll have to explain it.
+
+From today on, every run also archives its executed notebook as `runs/<exp_id>/notebook.html`.
+Rule 11 asked for this from the start, but nothing implemented it until now.
