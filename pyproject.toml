@@ -6,6 +6,7 @@ dependencies = ["numpy", "scipy", "SimpleITK", "pyyaml", "requests"]
 
 [project.optional-dependencies]
 train = ["torch", "monai", "pytorch-msssim"]
+paper = ["matplotlib"]                 # scripts/make_figures.py
 
 [build-system]
 requires = ["setuptools>=61"]
