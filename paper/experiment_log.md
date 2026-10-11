@@ -289,3 +289,24 @@ more interesting finding, and I'll have to explain it.
 
 From today on, every run also archives its executed notebook as `runs/<exp_id>/notebook.html`.
 Rule 11 asked for this from the start, but nothing implemented it until now.
+
+Later that night: the free Colab GPU quota ran out partway through the replicates. The second CT
+seed (`p4_unet_k2_s2`) finished and is evaluated. The second no-CT seed got to epoch 12 of 50
+before Colab disconnected the runtime at about 20:00 UTC, and reconnecting now gives "cannot
+connect to GPU backend due to usage limits". Its checkpoints up to epoch 12 are on Drive, so it
+resumes rather than restarts. The third seed of each arm hasn't started. In total the session
+gave us about five and a half hours of T4 time.
+
+One data point so far, and I'm not drawing conclusions from it: the second CT seed lands almost
+exactly on the first. PSNR after consistency is 57.18 dB against 56.96, SUVmax bias −3.4%
+against −3.5%, small lesions −7.4% against −7.1%, and the best validation loss is 0.00204 in
+both. The pilot's no-CT run (57.43 dB, −2.0%, −5.5%) is still ahead of both CT seeds. If the
+seed spread really is this narrow, the gap between the arms may turn out to be real, but that
+needs the no-CT seeds before I say anything.
+
+To make resuming a one-click job, I turned what I'd been typing into the Colab session into the
+committed `03_train.ipynb`. It now loops over a `CONFIGS` list and, for each run, trains (or
+resumes), evaluates and archives the executed notebook. The list holds the three runs still
+open. One provenance detail: when `p4_unet_noct_k2_s2` resumes, its `provenance.json` will name
+the newer commit, but no file under `src/` has changed since `5ac6e9d`, where it started, and its
+append-only `log.txt` keeps both start lines.
