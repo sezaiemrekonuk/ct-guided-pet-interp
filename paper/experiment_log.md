@@ -222,3 +222,46 @@ border. I froze this design before seeing any test number, so the test set is re
 comparison. Any tuning after it happens on the validation set. One known weakness is that each
 arm has a single seed, so a small gap between them won't mean much until we repeat it with more
 seeds. k = 3 and k = 4 follow once k = 2 works end to end.
+
+Later the same day: the pilot ran end to end on a free Colab T4, and the result is not the one I
+predicted. Degradation took about eight minutes for all three k. Caching the 79 training and
+validation patients to the Colab disk took half an hour; most of that is reading NIfTI files
+through the Drive mount. After that, each epoch took about 87 s with CT and 71 s without, so each
+model needed a little over an hour. All runs come from commit e6bd683 on a clean tree. The cubic
+baseline's validation loss was 0.0028 (the untrained network's "epoch -1" line). Both U-Nets
+dropped below it in the first epoch and then levelled off around 0.0020–0.0021 from about epoch
+15 on: 0.00204 at best for the CT model (epoch 41), and essentially the same for the no-CT
+model. More epochs would not have changed much.
+
+On the 21 test patients (numbers after the consistency projection, in `paper/tables/main_k2`),
+both networks beat the cubic spline everywhere we measure. Patient-paired Wilcoxon tests,
+Bonferroni-corrected over nine comparisons, give p ≤ 0.008 for PSNR, SSIM and NRMSE, with the
+U-Net ahead in 19–21 of 21 patients. The lesion numbers matter more. The cubic spline
+underestimates lesion SUVmax by 13% on average, 16% for lesions under 1 mL, and 7% next to the
+bladder. The U-Nets bring that down to 2–3.5%, 5.5–7% and about 1%. The spline smears every
+peak into its neighbours, and the network has learned to put the peak back. Measurement
+consistency also improved PSNR and NRMSE for all three models in every single patient. It
+mattered most for the spline (+0.8 dB) and less for the networks (+0.3 dB), because they already
+come close to averaging back to the measured slices.
+
+The surprise is CT. The model that sees the CT was not better than the one that doesn't; if
+anything it was slightly worse: a median of 0.29 dB lower PSNR, ahead in only 6 of 21 patients,
+and −7.1% against −5.5% SUVmax bias on small lesions. The PSNR difference has p = 0.01 before
+correction but 0.09 after, so I can't call it significant. It definitely isn't the improvement we
+hypothesised either. I see three explanations worth testing. First, it could be noise: each arm
+has one seed, and the two validation curves are almost on top of each other. Second, the network
+may simply have no use for CT in this formulation: it already has the measured thick slice and
+the spline, and PSMA uptake follows anatomy much less tightly than FDG does. Third, early fusion
+may be the wrong way to give it the CT, which is exactly the argument the problem definition
+makes for a separate CT encoder with cross-attention. The first explanation has to go before the
+others mean anything, so the next step is two more seeds per arm at k = 2. After that come k = 3
+and 4, where thicker slices leave more to infer and the anatomy might start to pay off.
+
+Two things I'll need for the write-up. Global PSNR and SSIM are nearly saturated (SSIM ≥ 0.998
+for every model), because the data range is each patient's SUVmax, which in PSMA usually means
+the bladder or kidneys. The lesion table is where models actually separate, which is what we
+expected when we made it the main table. Also, I ran the no-CT training and the evaluation as
+extra cells in the same Colab session (to avoid a second Drive authorisation), so the committed
+notebooks don't show those two calls. The calls were `train(rt.start('configs/p4_unet_noct_k2.yaml'))`
+and `evaluate(rt.start(c))` for the three configs; the configs and the commit fully determine the
+runs.

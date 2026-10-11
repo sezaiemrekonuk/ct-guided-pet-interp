@@ -75,6 +75,19 @@ def _stats(x):
             "median": float(np.median(x))}
 
 
+def wilcoxon_paired(a: dict[str, dict], b: dict[str, dict], metric: str, n_tests: int = 1) -> dict:
+    """Patient-paired Wilcoxon signed-rank of a per-patient metric, a vs b, Bonferroni over n_tests.
+
+    a, b: case -> {metric: value}, e.g. metrics.json per_patient[case]["consistency"].
+    """
+    from scipy.stats import wilcoxon
+    cases = sorted(set(a) & set(b))
+    d = np.array([a[c][metric] - b[c][metric] for c in cases])
+    p = float(wilcoxon(d).pvalue)
+    return {"n": len(cases), "median_diff": float(np.median(d)), "n_a_greater": int((d > 0).sum()),
+            "p": p, "p_bonferroni": min(1.0, p * n_tests)}
+
+
 def aggregate(per_patient: dict[str, dict]) -> dict:
     """Patient-level means for global metrics; lesion-level stats per subgroup."""
     les = [l for r in per_patient.values() for l in r["lesions"]]
