@@ -117,7 +117,8 @@ def archive_notebook(dest: Path) -> None:
     from nbconvert import HTMLExporter
 
     nb = _message.blocking_request("get_ipynb", timeout_sec=120)["ipynb"]
-    html, _ = HTMLExporter().from_notebook_node(nbformat.from_dict(nb))
+    # reads(), not from_dict(): Colab sends sources as lists of lines, which nbconvert rejects
+    html, _ = HTMLExporter().from_notebook_node(nbformat.reads(json.dumps(nb), as_version=4))
     tmp = Path(dest) / "notebook.html.tmp"
     tmp.write_text(html, encoding="utf-8")
     os.replace(tmp, Path(dest) / "notebook.html")
