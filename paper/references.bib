@@ -88,3 +88,75 @@
   year    = {2023},
   doi     = {10.1148/ryai.230024}
 }
+
+% Learned-model stack (2.5D U-Net, phase 4): framework, architecture, loss, optimizer, schedule.
+@inproceedings{paszke2019pytorch,
+  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and others},
+  title     = {{PyTorch}: An Imperative Style, High-Performance Deep Learning Library},
+  booktitle = {Advances in Neural Information Processing Systems 32},
+  pages     = {8024--8035},
+  year      = {2019}
+}
+
+@misc{cardoso2022monai,
+  author        = {Cardoso, M. Jorge and Li, Wenqi and Brown, Richard and others},
+  title         = {{MONAI}: An Open-Source Framework for Deep Learning in Healthcare},
+  year          = {2022},
+  eprint        = {2211.02701},
+  archivePrefix = {arXiv},
+  doi           = {10.48550/arXiv.2211.02701}
+}
+
+@inproceedings{ronneberger2015unet,
+  author    = {Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
+  title     = {{U-Net}: Convolutional Networks for Biomedical Image Segmentation},
+  booktitle = {Medical Image Computing and Computer-Assisted Intervention -- MICCAI 2015},
+  series    = {LNCS},
+  volume    = {9351},
+  pages     = {234--241},
+  year      = {2015},
+  doi       = {10.1007/978-3-319-24574-4_28}
+}
+
+@inproceedings{wang2003msssim,
+  author    = {Wang, Zhou and Simoncelli, Eero P. and Bovik, Alan C.},
+  title     = {Multiscale Structural Similarity for Image Quality Assessment},
+  booktitle = {The Thirty-Seventh Asilomar Conference on Signals, Systems \& Computers},
+  volume    = {2},
+  pages     = {1398--1402},
+  year      = {2003},
+  doi       = {10.1109/ACSSC.2003.1292216}
+}
+
+% Origin of the 0.84 MS-SSIM + 0.16 L1 mix.
+@article{zhao2017loss,
+  author  = {Zhao, Hang and Gallo, Orazio and Frosio, Iuri and Kautz, Jan},
+  title   = {Loss Functions for Image Restoration With Neural Networks},
+  journal = {IEEE Transactions on Computational Imaging},
+  volume  = {3},
+  number  = {1},
+  pages   = {47--57},
+  year    = {2017},
+  doi     = {10.1109/TCI.2016.2644865}
+}
+
+@misc{fang2019pytorchmsssim,
+  author       = {Fang, Gongfan},
+  title        = {pytorch-msssim: Fast and Differentiable {MS-SSIM} and {SSIM} for {PyTorch}},
+  howpublished = {\url{https://github.com/VainF/pytorch-msssim}},
+  year         = {2019}
+}
+
+@inproceedings{loshchilov2019adamw,
+  author    = {Loshchilov, Ilya and Hutter, Frank},
+  title     = {Decoupled Weight Decay Regularization},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2019}
+}
+
+@inproceedings{loshchilov2017sgdr,
+  author    = {Loshchilov, Ilya and Hutter, Frank},
+  title     = {{SGDR}: Stochastic Gradient Descent with Warm Restarts},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2017}
+}

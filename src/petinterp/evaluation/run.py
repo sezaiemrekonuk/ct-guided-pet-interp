@@ -25,7 +25,11 @@ def predict_case(run: Run, case: str) -> dict:
     hr_img = V.read(proc / "pet.nii.gz")
     gt = crop(V.array(hr_img), k)
     lr = V.array(V.read(run.path(cfg["degraded"]) / f"k{k}" / f"{case}.nii.gz"))
-    raw = MODELS[cfg["model"]["name"]](lr, k)
+    if cfg["model"]["name"] in MODELS:
+        raw = MODELS[cfg["model"]["name"]](lr, k)
+    else:  # learned model: torch is imported only here, so classical runs need no GPU stack
+        from petinterp.models.unet25d import predict
+        raw = predict(run, lr, crop(V.array(V.read(proc / "ct.nii.gz")), k))
     preds = {"raw": raw, "consistency": consistency(raw, lr, k)}
 
     body = crop(V.array(V.read(proc / "body.nii.gz")), k)

@@ -172,3 +172,53 @@ for free with every run.
 The first baseline is a cubic spline along z through the thick-slice centres, which sit at thin
 index i·k + (k−1)/2. Runs are `p3_cubic_k2`, `_k3` and `_k4`. This is the floor every learned
 model has to clear, and it's also the end-to-end test of the metric code.
+
+---
+
+## 2026-10-11 — The first learned model: a 2.5D residual U-Net, with and without CT
+
+Preprocessing ran on 2 October: all 100 DEEP-PSMA PSMA cases passed the QC gate, and the frozen
+split came out as 70 train, 9 validation and 21 test patients (the tertile rounding gives 9/21
+rather than 10/20). I copied `split_v1.json` from Drive into `splits/` today so it is in git.
+Before designing the first network I looked at the cohort geometry in `qc_summary.json`, and it
+is much less uniform than the one case I inspected in August. In-plane grids run from 128×128 to
+512×512 and native slice spacing from 1.5 to 5 mm. So "k = 2" does not mean one physical slice
+thickness. For a patient scanned at 5 mm we are restoring 5 mm slices from 10 mm ones, and for a
+1.5 mm patient we restore 1.5 mm from 3 mm. I'm keeping the native grids as they are, because
+resampling would change the frozen `processed/v1`. But I want results broken down by native
+spacing later, because I expect the 5 mm patients to be the hard ones. SUVmax is above 50 in 91
+of the 100 patients (median 82), which confirms that the log transform was the right choice. A
+[0, 50] clip would have flattened the peak of nearly every patient's hottest lesion.
+
+The network is rung 1 of the ladder, but I changed the formulation from the problem definition
+to fit our averaging degradation. The plan had been to predict one missing thin slice from its
+neighbours. Under averaging, though, no thin slice is missing: every one of them lies inside a
+measured thick slice. So the natural unit is the block. The model gets one thick slice and
+returns the k thin slices inside it, and the measurement-consistency projection then makes their
+mean equal the measured value exactly. The input is a stack of 2D channels: the thick PET slice
+and two thick neighbours on each side; the CT slices covering the block, plus one extra on each
+side; and the cubic-spline prediction for the k target slices. The network (MONAI's BasicUNet,
+7.8M parameters) predicts a correction to that cubic prediction. It uses batch normalisation instead of MONAI's default instance normalisation. Training
+sees 192×192 crops, but inference runs on whole slices of up to 512×512 that are mostly air,
+and per-image statistics would shift with how much air is in view. Its last layer starts at zero,
+so the untrained network *is* the cubic baseline exactly, and the smoke test checks this. I like
+that property. It means the first validation loss we log is the cubic baseline's, and every
+epoch after it shows directly whether the network has learned anything the spline couldn't do.
+
+Training follows the defaults we wrote down: 0.84·(1 − MS-SSIM) + 0.16·L1 in log-SUV space, with
+L1 weighted 5× on TTB lesion voxels. We use AdamW at 2e-4 with cosine decay, batch 16, and
+random 192×192 in-plane crops. The smaller grids are zero-padded up to 192, and 192 is also the
+smallest size five-scale MS-SSIM accepts. Augmentation is a left-right flip only, with nothing
+along z. This first run is a pilot: 50 epochs of 500 steps, roughly 30 passes over the training
+blocks at k = 2. Checkpoints go to Drive every epoch, and the run keeps the weights with the
+lowest validation loss.
+
+The experiment is the paper's main hypothesis in its smallest form. `p4_unet_k2` (with CT) and
+`p4_unet_noct_k2` (without CT) are identical except for the CT channels: same seed, same
+schedule, same split. Both are scored against `p3_cubic_k2` with the existing metric code, raw
+and after the consistency projection. My hypothesis is that both U-Nets beat cubic, and that CT
+helps most where anatomy changes quickly along z, which means small lesions and the bladder
+border. I froze this design before seeing any test number, so the test set is read once for this
+comparison. Any tuning after it happens on the validation set. One known weakness is that each
+arm has a single seed, so a small gap between them won't mean much until we repeat it with more
+seeds. k = 3 and k = 4 follow once k = 2 works end to end.
