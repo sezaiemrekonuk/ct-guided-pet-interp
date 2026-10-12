@@ -117,10 +117,13 @@ Non-negotiable. Violating one invalidates the experiment, not just the code.
   Same-session PET/CT is already aligned — grid matching only, no deformable registration.
 - **Data splits are patient-level, never slice-level.** Slice-level splitting leaks neighboring
   anatomy into the test set and inflates every metric.
-- **Liver SUVmean sanity check per patient**: FDG ≈ 1.5–3.0, Ga-68 PSMA ≈ 4–8. Out-of-range means
+- **SUV conversion check per patient**: FDG liver SUVmean ≈ 1.5–3.0. Out-of-range FDG means
   broken SUV conversion (decay correction, injected dose, weight units) — fix the conversion
-  before trusting anything downstream. On PSMA, kidneys and bladder must also be the brightest
-  structures present.
+  before trusting anything downstream. PSMA liver SUVmean is recorded, never a gate: it falls with
+  tumour burden and varies with tracer and uptake time (DEEP-PSMA: 39/100 below 4 with the paired
+  FDG liver in range in 38 of them, log 2026-10-12). A PSMA scan is checked through its paired FDG
+  scan where one exists; a PSMA source without one needs its own conversion check before use. On
+  PSMA, kidneys and bladder must also be the brightest structures present.
 - **QC gate before a patient enters a split:** affine orientation consistent, no NaN or negative
   SUV, at least 40 slices. Anything else is excluded, and the exclusion is logged.
 - **Never augment along z** — the problem is defined in z. L-R flip and in-plane rotation only.

@@ -310,3 +310,63 @@ resumes), evaluates and archives the executed notebook. The list holds the three
 open. One provenance detail: when `p4_unet_noct_k2_s2` resumes, its `provenance.json` will name
 the newer commit, but no file under `src/` has changed since `5ac6e9d`, where it started, and its
 append-only `log.txt` keeps both start lines.
+
+---
+
+## 2026-10-12 — The PSMA liver question, closed: it's the patients, not the conversion
+
+In August I left one question open: `train_0014`'s PSMA liver came out at 1.62 against the 4–8
+range in our guardrail, and I said I'd decide once I could see the whole cohort. Preprocessing on
+2 October gave me that: 40 of 100 PSMA livers fall outside 4–8, 39 below and one above. That was
+too many to wave through, so before touching the guardrail I wanted to know whether it was the
+patients or our SUV conversion. I wrote a cohort check for it (`suv_check`, run
+`p1_qc_suv_deep_psma`, commit `f075b00`, clean tree, CPU runtime on the shared root). It only
+reads the zips and changes no data.
+
+The first test is the paired FDG scan. FDG liver lands in its 1.5–3.0 range for 96 of 100
+patients, and for 38 of the 39 with a low PSMA liver. The one exception is `train_0067`, with an
+FDG liver of 1.26. That clears anything tied to the patient, like a weight entered in the wrong
+units. It can't clear errors tied to the PSMA scan itself, such as a wrong injected dose or decay
+time, because the two tracers are separate acquisitions. So I need to correct my August entry,
+where I said both tracers go "through the same conversion path". They go through our code the same
+way, but the dose and timing come from different scans.
+
+To catch a scan-level error I looked at organs other than the liver. A calibration error scales
+every organ in the scan by the same factor. If it were driving the low livers, log(organ) would
+track log(liver) with a slope near 1 across patients. Organ biology alone would give a slope near
+0. For the aorta (blood pool) the slope is 0.46 [0.33, 0.57], and still 0.41 [0.26, 0.53] after
+adjusting for tumour volume. The kidneys give 0.35 [0.11, 0.56] and the spleen 0.76 [0.46, 1.03].
+So part of the liver's patient-to-patient spread is shared with the rest of the body, but not all
+of it. Put as group differences, the 39 low-liver patients have livers 39% lower [−47, −33] than
+the 60 in range, but aortas only 12% lower [−25, −5], kidneys 7% lower (not significant) and
+spleens 34% lower. My first pass made the argument from those group differences alone, and
+review caught that it's biased. The groups are chosen on the liver, so even under a pure
+calibration error the other organs would drop less than the liver, just from regression to the
+mean. The slopes don't have that problem, and they're what I'd quote.
+
+The part not shared with the body looks like biology. Liver SUV falls with total tumour volume
+(Spearman ρ −0.44, p 5×10⁻⁶), which is the PSMA tumour-sink effect Gafita et al. described. So
+does the aorta (−0.38) and, more weakly, the spleen (−0.22), while the kidneys don't (~0).
+Partial volume isn't the explanation either. An 8 mm eroded, lesion-free liver core tracks the
+whole-organ mean almost perfectly (ρ 0.995), sits about 9% higher, and still leaves 34 patients
+below 4. The cohort's PSMA liver median is 4.47 (IQR 3.44–5.53). For comparison, Gafita et al.
+report a median of 3.7 (IQR 3.0–4.7) for Ga-68 PSMA-11. Our 4–8 range was simply set too high
+for a real metastatic population, and DEEP-PSMA mixes Ga-68 PSMA-617 and ¹⁸F-DCFPyL on top of
+that.
+
+What I can't say is where the shared part comes from. Calibration, the tracer mix, uptake time,
+kidney function and body habitus could all produce it, and this data can't tell them apart. What
+I can say is that calibration error can't explain the out-of-range livers, and that it wouldn't
+matter much for us if it existed. Our metrics are relative (PSNR and SSIM against each patient's
+own SUVmax, NRMSE and SUVmax bias as ratios), so a per-scan scale factor that scales
+prediction and truth alike cancels out of them.
+
+Decisions. `data/processed/v1` stays as it is. The liver flags never excluded anyone and nothing
+downstream reads them, so there's nothing to reprocess. The guardrail in CLAUDE.md now treats the
+PSMA liver as recorded, not gated. The conversion is checked through the paired FDG liver plus the
+kidney/bladder pattern, and a PSMA source without paired FDG (Ankara's DICOMs, if they come)
+needs its own conversion check before use. That's also why `suv_check` stays in the code rather
+than being thrown away after one run. One knock-on effect for yesterday's entry: `qc.py` is a new
+file under `src/`, so when `p4_unet_noct_k2_s2` resumes it won't be true that nothing under `src/`
+changed since `5ac6e9d`. Nothing in training or evaluation imports it, though, so the code that
+trains the model is unchanged.
