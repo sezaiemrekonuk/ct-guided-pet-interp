@@ -370,3 +370,63 @@ than being thrown away after one run. One knock-on effect for yesterday's entry:
 file under `src/`, so when `p4_unet_noct_k2_s2` resumes it won't be true that nothing under `src/`
 changed since `5ac6e9d`. Nothing in training or evaluation imports it, though, so the code that
 trains the model is unchanged.
+
+---
+
+## 2026-10-12 (night) — Phase 4 resumed: a resume bug, and three seeds that agree
+
+With Colab Pro I picked up the three replicates the free quota had left open: the rest of
+`p4_unet_noct_k2_s2` (stopped after epoch 13) and both third seeds, `p4_unet_k2_s3` and
+`p4_unet_noct_k2_s3`, all on a T4 through `03_train.ipynb`.
+
+The first attempt didn't get past loading the checkpoint. It re-cached the 79 training and
+validation patients (a quarter of an hour), found `last.pt`, and died with `TypeError: RNG state
+must be a torch.ByteTensor` before its first epoch. `train.py` loads the checkpoint with
+`map_location=DEVICE`, which also moves the saved RNG states onto the GPU, and
+`torch.Generator.set_state` and `torch.set_rng_state` only take CPU tensors. So every resume on a
+GPU would have failed the same way. Nobody saw it before because no run had ever been resumed;
+the smoke test resumes on the CPU, where nothing moves. The fix (`494ef93`) moves the two states
+back to the CPU before restoring them, and on the T4 `tests/test_unet25d.py` fails without it and
+passes with it. The failed attempt only added its start and cache lines to the log and touched no
+checkpoint. The fix doesn't change any number: it restores exactly the state a working resume
+would have restored. A resumed run is still not bit-identical to an uninterrupted one, but
+nothing here is, since `cudnn.benchmark` is on. Two sentences in earlier entries are now wrong,
+though: `train.py` did change between `5ac6e9d` and the end of `p4_unet_noct_k2_s2`, so it is not
+true that nothing under `src/` changed, nor that the training code is unchanged. Its `log.txt`
+has three start lines: `5ac6e9d` for epochs 0–13, `1dc7f67` for the failed attempt, and `494ef93`
+for epochs 14–49 and the evaluation. `provenance.json` names `494ef93`. Both third seeds ran from
+scratch at `494ef93`, and all three runs were on a clean tree. A CT epoch took about 89 s and a
+no-CT epoch about 70 s, so the three runs took about three and a half hours of T4 time including
+evaluation.
+
+The result is the second outcome I named yesterday, not the one I expected. The no-CT arm wins
+every seed. After consistency, PSNR is 57.43, 57.53 and 57.50 dB without CT and 56.96, 57.18 and
+56.77 dB with it, so no-CT is ahead by 0.47, 0.35 and 0.72 dB seed by seed. NRMSE goes the same
+way in all three (about 0.052 against 0.054–0.056). Lesion SUVmax bias is −2.0, −2.3 and −1.8%
+without CT against −3.5, −3.4 and −3.4% with it. For lesions under 1 mL it is −5.5, −5.8 and
+−5.2% against −7.1, −7.4 and −7.7%. The bladder-adjacent lesions are the exception: about −1% in
+both arms with no consistent order, but there are only 47 of them. The seed spread is small next
+to the gap: the PSNR standard deviation across seeds is 0.05 dB for no-CT and 0.20 dB for CT,
+against a 0.51 dB difference in means. Averaging each patient's metrics over the three seeds and
+rerunning the patient-paired Wilcoxon test (Bonferroni over PSNR, SSIM and NRMSE), no-CT is
+better in 20 of 21 patients on each of the three, with a median PSNR gain of 0.43 dB and
+corrected p = 0.0009 for PSNR, 1.4×10⁻⁵ for NRMSE and 6×10⁻⁶ for SSIM. Seed by seed, no-CT leads
+in 15, 20 and 19 patients on PSNR. I haven't tested the lesion biases per patient: `metrics.json`
+only keeps lesion aggregates, and the per-lesion numbers are in `runs/<exp_id>/per_patient/` on
+Drive. Their direction is the same in all three seeds, though.
+
+The training curves show it too, and they say something about why. The best validation loss is
+0.00197–0.00199 without CT and 0.00204–0.00206 with it, with no overlap. The CT model's training
+loss is also higher (about 0.00128 against 0.00124 over the last ten epochs, in every seed). So
+the CT arm is not overfitting to anatomy. It fits the training data worse in the first place, as
+if the extra channels get in the way of the optimisation rather than adding information. Of the
+three explanations from the pilot, noise is now ruled out. That leaves "the network has no use
+for CT at k = 2" and "early fusion is the wrong way to give it the CT". The second fits a model
+that is held back by its CT channels better than one that merely ignores them.
+
+So at k = 2, stacking the CT onto the input channels makes the 2.5D U-Net slightly but reliably
+worse, on global and lesion metrics alike. For phase 4 that means the no-CT U-Net is the
+stronger reference, and that's how the paper should report it. For phase 5 it raises the bar:
+the cross-attention model has to beat the no-CT U-Net, not the early-fusion one, before we can
+say the CT is doing anything. What stays open is k = 3 and 4, where thicker slices leave more to
+infer and the anatomy might start to pay off.
