@@ -96,8 +96,8 @@ def train(run: Run) -> list[dict]:
                                "a changed config is a new exp_id")
         for obj, key in ((model, "model"), (opt, "opt"), (sched, "sched"), (scaler, "scaler")):
             obj.load_state_dict(s[key])
-        gen.set_state(s["rng"]["loader"])
-        torch.set_rng_state(s["rng"]["torch"])
+        gen.set_state(s["rng"]["loader"].cpu())  # map_location moved them; RNG states must be CPU
+        torch.set_rng_state(s["rng"]["torch"].cpu())
         epoch0, best, history = s["epoch"] + 1, s["best"], s["history"]
         run.log(f"resume at epoch {epoch0}/{t['epochs']} (best val {best:.4f})")
     else:
