@@ -7,6 +7,7 @@ times with different configs:
 | --- | --- |
 | `download.ipynb` | fetch a public dataset (DEEP-PSMA / Zenodo) onto Drive, resumable |
 | `00_inspect.ipynb` | geometry and SUV sanity check on one case |
+| `suv_check.ipynb` | cohort-wide SUV conversion check: paired-FDG liver, liver variance shared with other organs, tumour sink |
 | `01_preprocess.ipynb` | DICOM → NIfTI, SUV conversion, QC gate, CT onto the PET grid, body mask, splits |
 | `02_degrade.ipynb` | frozen LR volumes by slice averaging |
 | `03_train.ipynb` | trains whatever model the config names, resumes from the last epoch |

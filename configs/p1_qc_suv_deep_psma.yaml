@@ -1,0 +1,27 @@
+# SUV conversion check on DEEP-PSMA (log 2026-08-26): 40/100 PSMA livers fall outside 4-8 in
+# p1_preprocess_deep_psma. Is that the patients or the conversion? Paired-FDG liver, how much of
+# the liver's spread it shares with other organs (with and without tumour volume), tumour sink.
+# Read-only on the data; per-patient JSON + summary.json under runs/<exp_id>/.
+exp_id: p1_qc_suv_deep_psma
+source:
+  archives: data/raw/deep_psma        # the zips from download.ipynb, read in place
+test_tracer: PSMA
+reference_tracer: FDG                 # same patient, separate scan: rules out patient-level errors
+labels:                               # TotalSegmentator v2 'total' ids in totseg_24.nii.gz
+  liver: [5]
+  spleen: [1]
+  kidneys: [2, 3]
+  aorta: [52]                         # blood pool
+reference_organs: [aorta, kidneys, spleen]   # all sink-affected to some degree, blood pool included
+core_erosion_mm:                      # lesion-free core, eroded against partial volume
+  liver: 8
+  aorta: 4
+liver_suvmean_range:                  # CLAUDE.md domain guardrails
+  PSMA: [4.0, 8.0]
+  FDG: [1.5, 3.0]
+quantiles: [0, 25, 50, 75, 100]
+min_group: 10                         # fewer patients than this in a group: no estimate
+bootstrap:
+  n: 2000
+  seed: 20261012
+histogram_bin_suv: 0.5
