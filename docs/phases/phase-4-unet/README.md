@@ -1,6 +1,6 @@
 # Phase 4 — U-Net
 
-*Status: in progress. The k = 2 pilot is done and the seed replicates are running.*
+*Status: in progress. k = 2 is done with three seeds per arm; the k = 3 and 4 pilots are set up but not started.*
 
 ## Goal
 
@@ -25,6 +25,8 @@ model in phase 5.
   They are evaluated with `p3_cubic_k2` on the 21 test patients.
 - `3102f80`–`5ac6e9d`: seed replicates `p4_unet_k2_s2/_s3` and `p4_unet_noct_k2_s2/_s3`.
   Every run now archives its executed notebook to `runs/<exp_id>/notebook.html`.
+- k = 3 and 4 pilots: `p4_unet_k3`, `p4_unet_noct_k3`, `p4_unet_k4`, `p4_unet_noct_k4`, the k = 2
+  pilot configs with only `k` changed (seed 20261011).
 
 ## Evidence (notebooks, figures, metric tables)
 

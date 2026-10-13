@@ -430,3 +430,50 @@ stronger reference, and that's how the paper should report it. For phase 5 it ra
 the cross-attention model has to beat the no-CT U-Net, not the early-fusion one, before we can
 say the CT is doing anything. What stays open is k = 3 and 4, where thicker slices leave more to
 infer and the anatomy might start to pay off.
+
+---
+
+## 2026-10-13 — The U-Net at k = 3 and k = 4: does the CT start to pay off once slices get thicker?
+
+Every model has to report k = 2, 3 and 4, and so far the U-Net only exists at k = 2. Last night
+also left one question open: at k = 2 the CT makes the U-Net slightly but reliably worse, and I
+can't yet tell "the network has no use for CT" apart from "early fusion is the wrong way to give
+it the CT". Thicker slices should help separate the two. At k = 4 each measured slice averages
+four thin ones, so there is much more inside every block that the PET alone can't pin down. That
+is exactly where knowing where an organ edge or a lesion sits along z should matter most. If the
+CT arm catches up or overtakes at k = 4, the network can use anatomy once PET runs out of
+information, and the k = 2 result was about there being little left to infer. If it still loses,
+the problem is more likely how the CT gets in, and that is the argument for phase 5.
+
+So the plan is to train both arms at both factors: `p4_unet_k3`, `p4_unet_noct_k3`, `p4_unet_k4` and
+`p4_unet_noct_k4`. They are copies of the k = 2 pilot configs with only `k` changed. Same seed
+(20261011), same 50 epochs × 500 steps, same loss, same model width. The only knock-on effect is
+on the input: the CT arm now gets k + 2 thin CT slices (5 at k = 3, 6 at k = 4) and both arms get
+k spline slices, and the output has k channels. Because an epoch is a fixed 8000 blocks and there
+are fewer blocks per patient at higher k, an epoch now covers about 0.9 of the training set at
+k = 3 and 1.2 at k = 4, against 0.6 at k = 2. I kept the step count fixed rather than the number
+of passes, so every run gets the same optimisation budget. The test set and its degraded volumes
+are the frozen `data/degraded/v1` files that the cubic baseline already used at k = 3 and 4.
+
+The training code was written for any k, but only k = 2 had ever been run through it. Before
+sending four GPU runs to Colab I extended the smoke test (`tests/test_unet25d.py`) to k = 2, 3
+and 4. Each one caches a tiny synthetic cohort, checks that the untrained network reproduces the
+cubic spline exactly, trains two epochs, resumes and evaluates. All three pass on the CPU, so a
+broken k path would have shown up here rather than an hour into a T4 session.
+
+What I expect, written down before seeing anything. First, the U-Net should beat cubic by more
+at higher k than at k = 2, because cubic gets much worse: 55.5 → 49.3 → 45.8 dB PSNR after
+consistency, and its lesion SUVmax bias goes from −13% to −24% to −35%. There is simply more
+left for a learned model to recover. Second, on CT I genuinely don't know. My guess is that the
+no-CT arm still leads at k = 3 and the gap closes or flips at k = 4. I'll look at the same things
+as at k = 2: global PSNR, SSIM and NRMSE inside the body mask, lesion SUVmax bias with the small
+and bladder-adjacent lesions separately, the validation curves, and the patient-paired Wilcoxon
+test. These are pilots with one seed per arm. At k = 2 the seed spread was 0.05–0.20 dB, so a gap
+much bigger than that is worth taking seriously, but no CT claim at k = 3 or 4 goes into the
+paper before two more seeds per arm, the same as at k = 2.
+
+The runs will go in pairs through `03_train.ipynb`, CT then no-CT at k = 3 and then at k = 4. If the
+quota runs out halfway, what's finished is still a matched pair. From the k = 2 timings (about
+89 s per CT epoch and 70 s per no-CT epoch on a T4), plus a fresh patient cache for each k, I
+expect around five to six hours of GPU time for all four. The configs and the notebook are
+committed today; we haven't picked a start date for the runs yet.

@@ -1,0 +1,39 @@
+# 2.5D residual U-Net, CT early fusion (model ladder rung 1). One thick slice in, its k thin
+# slices out, as a residual on cubic_z. The same file drives training (03_train) and evaluation
+# (04_evaluate). Twin of p4_unet_noct_k3: the two differ only in model.use_ct.
+exp_id: p4_unet_k3
+k: 3
+processed: data/processed/v1
+degraded: data/degraded/v1
+split_file: split_v1.json
+subset: test
+bladder_label: 21                     # TotalSegmentator urinary_bladder, in organs.nii.gz
+data:
+  suv_ref: 50                         # PET -> log(1+SUV)/log(1+50); absolute, never min-max
+  ct_hu: [-1000, 1000]                # CT -> [-1, 1]
+model:
+  name: unet25d
+  use_ct: true
+  pet_context: 2                      # thick PET slices on each side of the target block
+  ct_context: 1                       # thin CT slices on each side of the target block
+  features: [32, 64, 128, 256, 512, 32]   # MONAI BasicUNet, 7.8M parameters
+  norm: batch                         # not instance: inference sees whole slices, training 192 crops
+loss:
+  w_msssim: 0.84
+  w_l1: 0.16
+  lesion_weight: 5                    # L1 weight on TTB voxels (guardrail: 5-10x)
+  data_range: 1.0                     # in log-SUV units, SUV 50 -> 1.0
+train:
+  seed: 20261011
+  patch: 192                          # in-plane crop; 5-scale MS-SSIM needs > 160
+  batch: 16
+  lr: 2.0e-4
+  weight_decay: 1.0e-4
+  epochs: 50                          # cosine decay to 0 over all epochs
+  steps_per_epoch: 500                # an epoch = 8000 random blocks, about 0.9 passes at k=3 (0.6 at k=2)
+  val_stride: 4                       # validate on every 4th block of each val patient
+  workers: 2                          # Colab standard runtime has 2 CPUs
+  max_session_hours: 11
+eval:
+  checkpoint: best                    # lowest validation loss
+  batch: 32
