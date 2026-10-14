@@ -477,3 +477,104 @@ quota runs out halfway, what's finished is still a matched pair. From the k = 2 
 89 s per CT epoch and 70 s per no-CT epoch on a T4), plus a fresh patient cache for each k, I
 expect around five to six hours of GPU time for all four. The configs and the notebook are
 committed today; we haven't picked a start date for the runs yet.
+
+## 2026-10-14 — The U-Net at k = 4: two dB over cubic, and the CT gap is gone
+
+The k = 4 pair has run. I split the four runs from yesterday across two Colab notebooks so the
+k = 3 and k = 4 pairs could train side by side. Both first attempts died about ten minutes in,
+while they were still caching patients, because I changed my Colab plan in the middle and the
+runtimes were recycled. That cost nothing but time: neither run had written a checkpoint, and
+the only trace is an extra start line followed by a half-finished cache in each `log.txt`. I
+restarted k = 4 at 16:53 UTC on a T4, at `c57f1d8` on a clean tree. `p4_unet_k4` cached the 79
+training and validation patients in 15 minutes, trained at about 96 s per epoch and finished
+its evaluation at 18:38. `p4_unet_noct_k4` reused the cache in the same runtime, took about 74 s
+per epoch and finished at 19:46. That's a bit under three hours of T4 time for the pair. The k = 3
+pair is being restarted separately, so this entry is about k = 4 only.
+
+The first prediction was that the U-Net would beat cubic by more at k = 4 than at k = 2. That
+holds for the lesions but not for PSNR. After consistency, cubic gets 45.84 dB and the U-Net
+47.87 dB with CT and 47.79 dB without, a gain of about 2 dB. That's the same gain as at k = 2
+(55.46 against 57.43 dB without CT). It is completely consistent across patients, though: the
+no-CT U-Net beats cubic in all 21 test patients on PSNR, SSIM and NRMSE, and the CT one in 20,
+21 and 20 (corrected p ≤ 6×10⁻⁶ for every comparison). The lesions are where the extra room
+shows. Cubic loses 34.5% of lesion SUVmax at k = 4 and 37.6% for lesions under 1 mL. The U-Net
+brings that to −12.5% and −23.8% without CT, and −13.8% and −24.9% with it. That recovers about
+22 points of SUVmax against 11 at k = 2. But it also leaves a much larger residual: at k = 2 the
+U-Net was within 2% on SUVmax, and at k = 4 it still underestimates small lesions by almost a
+quarter. Bladder-adjacent lesions go from −18.9% with cubic to −6.6% without CT and −8.0% with
+it, but there are still only 47 of them. SSIM is 0.9949 in both arms against 0.9914 for cubic.
+
+On CT, the k = 2 picture doesn't carry over. At k = 2 the no-CT arm was better in every seed
+and in 20 of 21 patients. At k = 4 the two arms are level: 47.79 dB without CT and 47.87 dB with
+it, NRMSE 0.153 against 0.149, and the no-CT arm ahead on PSNR in only 12 of 21 patients. The
+patient-paired Wilcoxon test finds nothing (corrected p = 1 for all three metrics).
+The mean and the median even point in different directions. The median patient does 0.18 dB
+better without CT, but one patient (`train_0054`) does 1.8 dB better with it, which is enough
+to tip the mean. The per-patient differences now run from −1.8 to +1.0 dB, so k = 4 is a much
+noisier comparison than k = 2. On lesions the no-CT arm is slightly ahead (−12.5 against −13.8%,
+small −23.8 against −24.9%), the same direction as at k = 2 but about the size of a seed
+difference there. The training curves have changed as well. At k = 2 the CT arm fit the training
+data worse. At k = 4 its training loss over the last ten epochs is slightly lower (0.00426
+against 0.00433), but its best validation loss is still higher (0.00702 against 0.00690).
+That's a small gap and the training loss is noisy, so I wouldn't read overfitting into it yet,
+but it isn't the k = 2 pattern any more.
+
+So with one seed per arm, the most I'd say is that the CT penalty from k = 2 isn't there at
+k = 4. Whether the CT actually starts to help needs the seeds. A 0.08 dB lead with a ±1.8 dB
+patient spread is nothing to go on. It fits the second half of my guess from yesterday (the gap
+closes at k = 4) without telling the two explanations apart yet. If the k = 4 seeds come out
+level too, "the network only reaches for anatomy when PET runs out" becomes the better story,
+and early fusion looks less like the wrong mechanism than a weak one. For phase 5 it doesn't
+change the bar. The cross-attention model still has to beat the no-CT U-Net at every k. The
+next runs are the k = 3 pair, then two more seeds per arm at k = 3 and k = 4.
+
+## 2026-10-14 (night) — The U-Net at k = 3: the CT penalty is back
+
+The k = 3 pair took three starts. The first one (16:32 UTC) died at patient 38 of the cache when
+the plan change recycled the runtime, like the first k = 4 attempt. The second (16:48) got to
+patient 26 and stopped at 16:53, the minute the k = 4 notebook restarted. Colab wouldn't keep
+two GPU runtimes going for us at once, so the parallel plan didn't really work, and I waited for
+k = 4 to finish before starting k = 3 again. Neither attempt wrote a checkpoint, so all that's
+left of them is two extra start lines and two half caches in `p4_unet_k3/log.txt`. The third
+start, at 20:02 on a T4 at `c57f1d8` on a clean tree, ran through. `p4_unet_k3` cached the 79
+patients in 15 minutes, took about 95 s per epoch and finished evaluating at 21:47.
+`p4_unet_noct_k3` reused the cache, took about 71 s per epoch and finished at 22:53.
+
+Against cubic, k = 3 sits between the other two factors, as expected. After consistency, cubic
+gets 49.29 dB and the U-Net 51.71 dB without CT and 51.17 dB with it. The no-CT gain (2.4 dB) is
+a bit larger than at k = 2 and k = 4 (both about 2 dB), so the gain over cubic doesn't simply grow
+with k. Both arms beat cubic on SSIM in all 21 patients. On PSNR the no-CT U-Net wins in 20 and
+the CT one in 19 (corrected p ≤ 1.3×10⁻⁴ for every comparison). The lesions follow the pattern
+from k = 4. Cubic loses 24.3% of lesion SUVmax and 27.3% for lesions under 1 mL. The U-Net brings
+that to −7.8% and −15.3% without CT, and −8.3% and −15.9% with it. That's about 16 points of
+SUVmax recovered, between the 11 at k = 2 and the 22 at k = 4, and the residual on small lesions
+almost triples from k = 2 to k = 3. Bladder-adjacent lesions go from −11.2% to −1.4% and −1.7%
+(n = 47 again).
+
+Something I hadn't looked at before shows up when I line up the three factors: for the U-Net,
+the consistency step costs a little lesion SUVmax at every k, while it adds 0.2–0.4 dB of PSNR.
+Without CT the bias goes from −6.1 to −7.8% at k = 3, from −0.8 to −2.0% at k = 2 and from −10.9
+to −12.5% at k = 4. For cubic it's the other way round: consistency improves SUVmax by about five
+points at every k. My guess is that the correction spreads each thick slice's residual evenly
+over its k thin slices, so when the network has put a peak in the right slice, the correction
+partly flattens it (`consistency` in `data/degrade.py` adds the residual back with
+`np.repeat`). We report the consistent numbers as the main result anyway, but this needs a
+sentence in the Discussion, and it could matter for the phase-5 loss.
+
+On CT, k = 3 looks like k = 2, not k = 4. The no-CT arm is better by 0.54 dB on average (median
+0.29 dB) and in 19 of 21 patients on PSNR, 20 on SSIM and 19 on NRMSE. The patient-paired
+Wilcoxon test gives corrected p = 0.001 for PSNR, 0.0009 for NRMSE and 9×10⁻⁶ for SSIM, and the
+raw outputs say the same. The lesion biases point the same way but by half a point, which is
+seed size. The training curves repeat the k = 2 pattern as well. The CT model ends with a higher
+training loss (0.00286 against 0.00282 over the last ten epochs) and a higher best validation
+loss (0.00462 against 0.00449), so it fits worse instead of overfitting.
+
+What bothers me is `train_0054`. At k = 4 it was the one patient that tipped the mean towards CT,
+at +1.8 dB. At k = 3 it goes the other way: no-CT is 2.1 dB better there, the second-largest gap
+after `train_0074` (+2.3 dB). A patient that swings by almost four dB between neighbouring
+factors tells me that one seed per arm is not enough to call k = 4 level. So with one seed, the
+picture is that early fusion hurts at k = 2 and k = 3, and k = 4 is undecided. That doesn't
+fit "the network reaches for anatomy when PET runs out" well, because k = 3 has less PET than
+k = 2 and the penalty hasn't shrunk (0.51 dB in the k = 2 seed mean against 0.54 here). The
+seeds at k = 3 and k = 4 will decide it, and those are the next eight runs. For phase 5 the bar
+stays the no-CT U-Net at every k.
