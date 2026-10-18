@@ -578,3 +578,24 @@ fit "the network reaches for anatomy when PET runs out" well, because k = 3 has 
 k = 2 and the penalty hasn't shrunk (0.51 dB in the k = 2 seed mean against 0.54 here). The
 seeds at k = 3 and k = 4 will decide it, and those are the next eight runs. For phase 5 the bar
 stays the no-CT U-Net at every k.
+
+## 2026-10-18 — Seeds 2 and 3 at k = 3 and 4, k = 4 first
+
+I set up the eight seed runs today, two more per arm at each factor, with the same recipe as at
+k = 2. Each config is its pilot with only `exp_id` and `train.seed` changed (20261012 and
+20261013), so the seeds are directly comparable with the k = 2 replicates. `03_train.ipynb` now
+queues them as matched CT/no-CT pairs, k = 4 before k = 3. The order is on purpose: at k = 3 the
+penalty was already there in 19 of 21 patients, so its seeds will most likely just confirm it,
+while k = 4 is the open question, and if the quota runs dry halfway I'd rather have the answer
+there. From the pilot timings that's about three hours of T4 per pair, so roughly twelve hours
+for all eight. What decides it at k = 4: if the no-CT arm wins in two of three seeds, the
+penalty holds at every k and the "PET runs out" story is dead; if the arms stay level across all
+three, early fusion only stops hurting once PET gets that sparse. Either way I'll check whether
+`train_0054` keeps swinging between seeds the way it swung between k = 3 and 4.
+
+I also generated the k = 3 and k = 4 pilot tables (`main_k3`, `main_k4`) and learning curves,
+which only existed as numbers in this log until now. The curve figure had its y-axis ceiling
+fixed at 0.003, which suits k = 2 but would have clipped every point at k = 3 and 4, where the
+validation loss sits between 0.0045 and 0.009. The ceiling is now 15% above the highest
+first-epoch validation loss in the figure, which comes out at 0.0030 at k = 2, so that figure
+doesn't change in any visible way. No metric changed.
