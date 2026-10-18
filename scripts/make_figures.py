@@ -21,7 +21,7 @@ import yaml  # noqa: E402
 REPO = Path(__file__).resolve().parents[1]
 ARM = {True: ("PET + CT", "#2a78d6"), False: ("PET only", "#eb6834")}  # validated categorical pair
 INK, MUTED = "#1f1f1e", "#8a8984"
-YMAX = 0.003  # validation-loss axis ceiling; the cubic baseline sits at 0.0028
+HEADROOM = 1.15  # axis ceiling over the highest first-epoch val loss; 0.0030 at k=2, scales with k
 
 
 def _config(exp_id: str) -> dict:
@@ -32,18 +32,20 @@ def _config(exp_id: str) -> dict:
 def curves(name: str, exp_ids: list[str]) -> Path:
     fig, ax = plt.subplots(figsize=(3.5, 2.6))  # one journal column
     seen = set()
-    for e in exp_ids:
-        h = json.loads((REPO / "results" / e / "train_history.json").read_text(encoding="utf-8"))
+    hist = {e: json.loads((REPO / "results" / e / "train_history.json").read_text(encoding="utf-8"))
+            for e in exp_ids}
+    ymax = HEADROOM * max(h[0]["val_loss"] for h in hist.values())
+    for e, h in hist.items():
         label, color = ARM[_config(e)["model"]["use_ct"]]
         x, y = [r["epoch"] for r in h], [r["val_loss"] for r in h]
-        ax.plot(x, [min(v, YMAX) for v in y], color=color, lw=1.2, alpha=0.85,
+        ax.plot(x, [min(v, ymax) for v in y], color=color, lw=1.2, alpha=0.85,
                 label=None if label in seen else label)
         seen.add(label)
         for xi, yi in zip(x, y):  # one-epoch spikes are clipped, never hidden: their value is printed
-            if yi > YMAX:
-                ax.annotate(f"{yi:.4f}", (xi, YMAX), xytext=(3, -2), textcoords="offset points",
+            if yi > ymax:
+                ax.annotate(f"{yi:.4f}", (xi, ymax), xytext=(3, -2), textcoords="offset points",
                             fontsize=6, color=INK, va="top")
-    ax.set_ylim(top=YMAX)
+    ax.set_ylim(top=ymax)
     ax.set_xlabel("epoch", color=INK)
     ax.set_ylabel("validation loss", color=INK)
     ax.tick_params(colors=MUTED, labelcolor=INK, labelsize=8)
