@@ -599,3 +599,81 @@ fixed at 0.003, which suits k = 2 but would have clipped every point at k = 3 an
 validation loss sits between 0.0045 and 0.009. The ceiling is now 15% above the highest
 first-epoch validation loss in the figure, which comes out at 0.0030 at k = 2, so that figure
 doesn't change in any visible way. No metric changed.
+
+## 2026-10-19 — Seeds 2 and 3 at k = 3 and 4: the CT penalty shrinks with k and is gone at k = 4
+
+All eight seed runs are done, every one of them trained and evaluated on `9e45daa` with a clean
+tree (each `log.txt` has its start lines there). The queue ran in order on a T4 from 10:28 to
+22:06 yesterday, about ten hours of GPU time once the gap below is taken out. That gap was my
+fault. I closed the Colab session after `p4_unet_k4_s3` had finished evaluating but before its
+notebook was archived. The restart at 15:58 went through the queue from the top. The three
+finished runs each logged `resume at epoch 50/50`, were scored again with the same numbers to the
+last digit, and were archived again, so `notebook.html` for `p4_unet_k4_s2` and
+`p4_unet_noct_k4_s2` is now the restart's copy. Their `log.txt` still has the whole history.
+Late in the evening the cell output in the browser stopped updating at epoch 42 of
+`p4_unet_noct_k3_s3`, which looked like a dead runtime. It wasn't: the Drive log shows the run
+finishing at 22:06 in the same session. All the numbers below are after consistency, and they
+are now in `main_k3` and `main_k4`, one row per seed.
+
+At k = 3 the seeds confirm the pilot. The no-CT arm wins every seed: 51.71, 51.50 and 51.53 dB
+against 51.17, 51.20 and 51.33 dB with CT, so it is ahead by 0.54, 0.31 and 0.20 dB. I averaged
+each patient's metrics over the three seeds and ran the patient-paired Wilcoxon test again
+(Bonferroni over PSNR, SSIM and NRMSE). That test is now part of `make_tables.py`, and the
+results are in `stats_k3`. No-CT is better in 17 of 21 patients on PSNR, with a
+median gain of 0.12 dB and corrected p = 0.005. For NRMSE it is 17 of 21 and p = 0.004, and for
+SSIM 19 of 21 and p = 1.4×10⁻⁵. The lesions go the same way in every seed. SUVmax bias is −7.8,
+−7.1 and −7.3% without CT against −8.3, −8.5 and −8.1% with it, and for lesions under 1 mL −15.3,
+−14.6 and −15.2% against −15.9, −15.6 and −15.9%. The training losses repeat k = 2. The CT model
+ends with the higher training loss in every seed (0.00285–0.00288 against 0.00282–0.00285 over
+the last ten epochs) and the higher best validation loss, with no overlap (0.00460–0.00462
+against 0.00448–0.00450). So at k = 3, early fusion costs a little, reliably, and the CT model
+fits worse rather than overfitting.
+
+At k = 4 I have to be careful with the rule I wrote down yesterday. By seed means, no-CT is
+ahead in two of three seeds: 47.93 against 47.78 dB and 48.01 against 47.83 dB, after the pilot
+went the other way (47.79 against 47.87 dB). By the letter of the rule, the penalty holds at
+every k. But both of those wins are one patient. On `train_0054` no-CT is ahead by 2.0 and 4.3 dB
+in seeds 2 and 3, and behind by 1.8 dB in the pilot. Without that patient the three seed gaps
+are +0.02, +0.07 and −0.02 dB. At the patient level there is nothing. No-CT is better in 12, 12
+and 11 of 21 patients seed by seed. After averaging over seeds it is 11 of 21 with a median of
+0.01 dB, and corrected p = 1 for PSNR and NRMSE and 0.73 for SSIM, raw outputs included. I should
+have stated the rule at the patient level. A mean over 21 patients can be carried by one of them,
+and here it was. Read honestly, the two arms are level at k = 4 on every global metric. The
+training curves agree. The training loss is the same in both arms (0.00425–0.00433). The best
+validation loss is still a little lower without CT (0.00690–0.00693 against 0.00698–0.00702), and
+the CT curves are visibly noisier, with one-epoch spikes to 0.0088–0.0104 early on in every seed.
+
+The lesions are the one place where k = 4 still leans towards no-CT, consistently but by little.
+SUVmax bias is −12.5, −12.4 and −12.8% without CT against −13.8, −13.0 and −14.3% with it, and
+under 1 mL −23.8, −23.5 and −23.9% against −24.9, −24.2 and −25.7%. That's about one point in
+every seed. I can't test it per patient from `metrics.json`, which keeps only lesion aggregates.
+Bladder-adjacent lesions have no consistent order (n = 47).
+
+`train_0054` deserves its own sentence, because it explains the swing I worried about on the
+14th. At k = 4 it isn't a patient where one arm is better. It's a patient where the seed
+decides. With CT it gets 45.03, 45.20 and 41.86 dB, with NRMSE up to 0.44 in the third seed.
+Without CT it gets 43.23, 47.22 and 46.11 dB. Both arms swing by 3–4 dB on it, more than the
+whole gap between the arms on any other patient. At k = 3 it is calmer, and the CT arm is lower
+on it in every seed. It's the first case I'd open in the viewer when we look at failures.
+
+Put the three factors side by side and the picture is simpler than the pilots made it look. The
+mean no-CT advantage is 0.51 dB at k = 2, 0.35 dB at k = 3 and 0.09 dB at k = 4. The median
+patient gain is 0.43, 0.12 and 0.01 dB. The penalty shrinks steadily as the slices get thicker.
+On the 14th I wrote that the k = 3 pilot didn't fit "the network reaches for anatomy when PET
+runs out", because its penalty hadn't shrunk. With three seeds it has. So neither of my two
+stories wins outright. The CT never helps at any k. But its cost falls as the PET gets sparser,
+which is what I'd expect if early fusion carries a fixed optimisation cost and the anatomy earns
+back more of it the less the PET can pin down. At k = 4 the two cancel.
+
+That settles the phase-4 results. The no-CT U-Net is the reference at k = 2 and 3. At k = 4 the two arms are
+level, and the paper reports both and says so. For phase 5 the bar is the no-CT U-Net at every k.
+The place where a better way of feeding in the CT has the most room to show something is k = 4,
+where early fusion already breaks even. I also regenerated `main_k2` and the k = 2 learning
+curves so that every factor has the same layout, three seeds per arm. Until now `main_k2` held only
+the pilots and the k = 2 curve had three of the six runs. The seed-averaged significance tests
+used to be one-off calculations: on the 12th for k = 2, and again for this entry. A number the
+paper uses has to come from the generator, so `make_tables.py` now runs the test. Its "vs" form
+averages each arm over its seeds and writes the Wilcoxon results to `stats_k2`, `stats_k3` and
+`stats_k4`, with the test itself taken from `evaluation/metrics.py`. Its k = 2 numbers match the
+ones I wrote on the 12th. No metric changed. The paper draft doesn't exist yet, so the phase-4
+section of it is still to write, and the `phase-4-complete` tag waits for it.

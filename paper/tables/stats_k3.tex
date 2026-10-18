@@ -1,0 +1,12 @@
+\begin{tabular}{lllrrrrrrr}
+\toprule
+a & b & seeds & variant & metric & mean a & mean b & median a-b & a better & p (Bonferroni) \\
+\midrule
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & raw & PSNR (dB) & 51.29 & 50.95 & 0.1575 & 18/21 & 0.0035 \\
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & raw & SSIM & 0.9971 & 0.9971 & 0.000044 & 21/21 & 2.9e-06 \\
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & raw & NRMSE & 0.1028 & 0.1092 & -0.001613 & 18/21 & 0.003 \\
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & consistency & PSNR (dB) & 51.58 & 51.23 & 0.1232 & 17/21 & 0.0048 \\
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & consistency & SSIM & 0.9972 & 0.9971 & 0.000040 & 19/21 & 1.4e-05 \\
+p4\_unet\_noct\_k3 & p4\_unet\_k3 & 3/3 & consistency & NRMSE & 0.0992 & 0.1055 & -0.001381 & 17/21 & 0.0041 \\
+\bottomrule
+\end{tabular}

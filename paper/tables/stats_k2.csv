@@ -1,0 +1,7 @@
+a,b,seeds,variant,metric,mean a,mean b,median a-b,a better,p (Bonferroni)
+p4_unet_noct_k2,p4_unet_k2,3/3,raw,PSNR (dB),57.11,56.51,0.4323,19/21,0.0011
+p4_unet_noct_k2,p4_unet_k2,3/3,raw,SSIM,0.9989,0.9988,0.000033,20/21,5.7e-06
+p4_unet_noct_k2,p4_unet_k2,3/3,raw,NRMSE,0.0541,0.0569,-0.002258,19/21,9.4e-05
+p4_unet_noct_k2,p4_unet_k2,3/3,consistency,PSNR (dB),57.48,56.97,0.4284,20/21,0.00088
+p4_unet_noct_k2,p4_unet_k2,3/3,consistency,SSIM,0.9989,0.9989,0.000032,20/21,5.7e-06
+p4_unet_noct_k2,p4_unet_k2,3/3,consistency,NRMSE,0.0518,0.0543,-0.001959,20/21,1.4e-05
