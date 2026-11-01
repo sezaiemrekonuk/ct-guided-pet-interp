@@ -478,6 +478,7 @@ quota runs out halfway, what's finished is still a matched pair. From the k = 2 
 expect around five to six hours of GPU time for all four. The configs and the notebook are
 committed today; we haven't picked a start date for the runs yet.
 
+<<<<<<< HEAD
 ## 2026-10-14 — The U-Net at k = 4: two dB over cubic, and the CT gap is gone
 
 The k = 4 pair has run. I split the four runs from yesterday across two Colab notebooks so the
@@ -677,3 +678,58 @@ averages each arm over its seeds and writes the Wilcoxon results to `stats_k2`, 
 `stats_k4`, with the test itself taken from `evaluation/metrics.py`. Its k = 2 numbers match the
 ones I wrote on the 12th. No metric changed. The paper draft doesn't exist yet, so the phase-4
 section of it is still to write, and the `phase-4-complete` tag waits for it.
+=======
+---
+
+## 2026-10-15 — Meeting notes: what to try beyond the U-Net ladder
+
+After the last meeting I wrote down, in an email to Seçkin and Mustafa Kemal, the ideas we agreed
+to try once the ladder is in place. Logging them here so they don't live only in a mailbox.
+
+The list: a 3D model instead of the 2.5D one; DDGAN; a diffusion model, since we apparently have
+access to MareNostrum compute if we want to go that way; and a test with knowledge distillation
+or a foundation model. One version of that last idea is to distil a foundation model's knowledge
+into the CT-aware part of our network and use it while training a GAN. We also want input
+variants: CT + sparse PET → PET, which is our main setting, against CT → PET alone, which would
+show how much the measured PET contributes beyond anatomy. The concrete to-do for the next meeting
+is to report the U-Net at k = 3 and k = 4. Someone else might also join to help.
+
+One thing I need to be honest about: DDGAN and any GAN training conflict with the guardrail in
+CLAUDE.md that bans adversarial losses, because invented SUV values are not clinically
+defensible. Nothing has changed in the rules yet. My plan is to keep these as exploratory
+experiments that only stay if they match the non-adversarial models on lesion SUVmax bias, and to
+change the guardrail explicitly, with a log entry, before the first GAN run, rather than letting
+it erode quietly.
+
+---
+
+## 2026-10-18 — The course proposal
+
+We had to submit a project proposal for school, so I wrote one using the Hacettepe Computer
+Engineering undergraduate proposal form (I couldn't find an AIN491 or BBM491 version, so I used
+the BBM419 form). I deliberately wrote it as a plan rather than a progress report: it describes
+the problem, the method, the try list from the meeting, milestones, success criteria, budget and
+risks, and it doesn't quote our k = 2 results. The proposal lives as a Google Doc; the link is in
+`docs/proposal/README.md`.
+
+---
+
+## 2026-10-22 — Advisor's review of the proposal, and what I changed
+
+Our advisor read the proposal and sent four comments. First, write it in an impersonal voice
+("In this project, a deep learning based system … will be developed") instead of "we will".
+Second, the innovative aspects, the industry contribution and the technologies sections should be
+explained in paragraphs, not bullet points. Third, the state of the art should cover more works,
+with more technical detail on each. Fourth, the bullet points in the project plan stand out too
+much; where a bold label or a heading already marks something, it doesn't also need a bullet.
+
+I changed all four in the same Google Doc. The whole text is now impersonal. Sections IV to VI
+and product features are paragraphs, and the plan sections have bold labels but no bullets. The
+state of the art grew from the four baselines to twelve cited works: SAINT, I³Net, RIFE and FILM
+are now described technically, and SMORE, Song et al.'s MR-guided PET super-resolution,
+Ben-Cohen et al.'s CT-to-PET synthesis, SR3, DDGAN, Swin UNETR and the Transformer were added.
+The details on SAINT, I³Net, SMORE, Song et al. and Ben-Cohen et al. were checked against the
+papers. The ones on RIFE, FILM, SR3, DDGAN and Swin UNETR still need a check before anything
+from the proposal goes into the paper. The team is now three students (Mustafa Kemal Öz joined),
+so I also fixed the places that still said "both members".
+>>>>>>> 1cda6f6 (docs(log): meeting try list, course proposal and advisor review)
