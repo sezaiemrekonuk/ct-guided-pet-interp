@@ -725,3 +725,48 @@ The details on SAINT, I³Net, SMORE, Song et al. and Ben-Cohen et al. were check
 papers. The ones on RIFE, FILM, SR3, DDGAN and Swin UNETR still need a check before anything
 from the proposal goes into the paper. The team is now three students (Mustafa Kemal Öz joined),
 so I also fixed the places that still said "both members".
+
+## 2026-11-01 — Picking a foundation model, and wiring CT-FM in as the CT branch
+
+Back in September our advisor suggested building on a foundation model, and I said I wanted a
+shortlist before anything went into the plan. Today I made it and checked every claim against
+the papers, code repositories and model cards themselves. Training one from scratch was never
+realistic for us: about a hundred patients and Colab. So the question was which pretrained model
+to fine-tune or reuse, and where it goes.
+
+Seven candidates. CT-FM (Pai et al. 2025) is a 3D SegResNet encoder, 77.8M parameters, trained
+with intra-sample SimCLR on 148,000 CT scans from 69 Imaging Data Commons collections, mostly
+NLST. Weights are Apache-2.0, code MIT. The self-supervised Swin UNETR encoder (Tang et al. 2022,
+5,050 public CTs) is the backup; the licence on its weights isn't stated anywhere I could find.
+TAP-CT is a 3D DINOv2 trained on 104,405 private CTs from the NKI, weights CC BY-NC, so nobody can
+reproduce its pretraining. FratMAE has no released weights. Dual-DINOv3 is 2D, min-max normalises
+its CT, and I found no weights link in the paper. The JNM abstract (You Wu 2026) is an abstract
+with no weights and a +0.013 Dice gain over scratch.
+
+The one I want on record is Liu et al. (arXiv 2605.21835, May 2026), an "open" whole-body FDG
+PET/CT model. Its pretraining corpus includes the FDG scans of all 100 DEEP-PSMA patients. Our
+test patients are DEEP-PSMA patients, so anything built on it would have already seen their
+anatomy before we test it. It also z-scores SUV per volume, which breaks our absolute-SUV rule,
+and its repository carries no licence. It's out, and a reviewer who knows that paper will ask, so
+the reason belongs in the Methods.
+
+I went with CT-FM, and as a replacement for the CT branch rather than a new backbone. That
+follows from our own numbers: the raw-CT U-Net costs us at k = 2 and 3 and only breaks even at
+k = 4. If a better CT representation makes the CT start to pay, that's a finding; if it still
+doesn't, that's a finding too, and a stronger one than "our CT fusion was too simple". The new
+model, `unet25d_ctfm`, keeps the U-Net and the cubic residual exactly as in p4. Instead of k + 2
+raw CT channels, a 16-slice CT slab around the block goes through the frozen CT-FM encoder, each of
+its five feature levels is averaged over z and added to the matching U-Net encoder level through a
+1x1 conv that starts at zero. So the untrained network is still exactly the cubic baseline, and
+p4_unet_k* and p4_unet_noct_k* are the direct comparisons. Only 8.1M parameters train; CT-FM
+stays frozen, BatchNorm statistics included. Fine-tuning it is a later question.
+
+Two known compromises. CT-FM was pretrained at 1 x 1 x 3 mm, and our CT sits on the PET grid at
+about 4 mm in-plane, so it sees anatomy four times coarser than it learned on. The paper reports
+it adapting across spacings, but if CT-FM doesn't help, feeding it at its native resolution is the
+first thing to try before concluding anything. And our cache clips CT at +1000 HU, so it never
+sees dense bone above that, though it was trained up to 2048.
+
+Configs are p5_unet_ctfm_k2/3/4 with the CT-FM weights pinned to Hugging Face revision 527b0d1.
+I checked locally that the real weights load into MONAI's own SegResEncoder with every key and
+shape matching, and the smoke test passes at all three k. No training run yet.

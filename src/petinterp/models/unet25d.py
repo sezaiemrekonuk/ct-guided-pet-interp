@@ -3,12 +3,17 @@
 Output = cubic_z base + learned residual. The last conv starts at zero, so the untrained network
 is exactly the cubic baseline and training can only move away from it where that helps.
 use_ct: false gives the no-CT arm of the main ablation with everything else identical.
+name: unet25d_ctfm swaps the raw CT channels for features of the frozen CT-FM encoder.
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import torch
+import torch.nn.functional as F
 from monai.networks.nets import BasicUNet
 from torch import nn
 
@@ -18,16 +23,83 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Residual(nn.Module):
-    def __init__(self, cfg: dict):
+    def __init__(self, cfg: dict, in_channels: int | None = None):
         super().__init__()
         self.k = cfg["k"]
-        self.net = BasicUNet(spatial_dims=2, in_channels=n_channels(cfg), out_channels=self.k,
+        self.net = BasicUNet(spatial_dims=2, in_channels=in_channels or n_channels(cfg), out_channels=self.k,
                              features=tuple(cfg["model"]["features"]), norm=cfg["model"]["norm"])
         nn.init.zeros_(self.net.final_conv.weight)
         nn.init.zeros_(self.net.final_conv.bias)
 
     def forward(self, x):
         return x[:, -self.k:] + self.net(x)  # base channels are always last
+
+
+def ctfm_encoder(c: dict) -> nn.Module:
+    """CT-FM's 3D SegResEncoder (Pai et al. 2025) with its pretrained weights, at the pinned revision.
+
+    The Hugging Face checkpoint is a plain MONAI SegResEncoder state dict, so no lighter_zoo.
+    """
+    from huggingface_hub import hf_hub_download
+    from monai.networks.nets.segresnet_ds import SegResEncoder
+    from safetensors.torch import load_file
+
+    def get(f):
+        return hf_hub_download(c["repo"], f, revision=c["revision"])
+
+    enc = SegResEncoder(**json.loads(Path(get("config.json")).read_text(encoding="utf-8")))
+    enc.load_state_dict(load_file(get("model.safetensors")))
+    return enc
+
+
+class CTFMResidual(Residual):
+    """Residual U-Net whose CT branch is the frozen CT-FM encoder instead of raw CT channels.
+
+    The ct_slab thin CT slices around the block go through CT-FM as one 3D volume. Each of its
+    feature levels is averaged over z, pooled to the in-plane size of the matching BasicUNet
+    encoder level and added there through a 1x1 conv. Those convs start at zero, so the untrained
+    network is still exactly the cubic baseline. HU above data.ct_hu's upper bound is already
+    clipped in the cache, so CT-FM never sees bone above 1000 HU (it was trained up to 2048).
+    """
+
+    def __init__(self, cfg: dict):
+        m, c = cfg["model"], cfg["model"]["ctfm"]
+        super().__init__(cfg, in_channels=n_channels(cfg) - m["ct_slab"])
+        self.pet, self.slab = 2 * m["pet_context"] + 1, m["ct_slab"]
+        self.hu, self.window = cfg["data"]["ct_hu"], c["hu"]
+        self.ctfm = ctfm_encoder(c).requires_grad_(False)
+        with torch.no_grad():
+            chans = [f.shape[1] for f in self.ctfm.eval()(torch.zeros(1, 1, 16, 32, 32))]
+        self.proj = nn.ModuleList(nn.Conv2d(ci, co, 1) for ci, co in zip(chans, m["features"]))
+        for p in self.proj.parameters():
+            nn.init.zeros_(p)
+
+    def train(self, mode: bool = True):
+        super().train(mode)
+        self.ctfm.eval()  # frozen: BatchNorm keeps CT-FM's own statistics
+        return self
+
+    def forward(self, x):
+        p, s, (lo, hi), (a, b) = self.pet, self.slab, self.hu, self.window
+        hu = (x[:, p:p + s] + 1) / 2 * (hi - lo) + lo  # back from [-1, 1] to HU, then CT-FM's window
+        with torch.no_grad():
+            feats = self.ctfm(((hu.clamp(a, b) - a) / (b - a)).unsqueeze(1))
+        n, h, skips = self.net, torch.cat([x[:, :p], x[:, p + s:]], 1), []
+        for layer, f, proj in zip((n.conv_0, n.down_1, n.down_2, n.down_3, n.down_4), feats, self.proj):
+            h = layer(h)
+            h = h + proj(F.adaptive_avg_pool3d(f, (1, *h.shape[-2:]))[:, :, 0].to(h.dtype))
+            skips.append(h)
+        u = n.upcat_4(skips[4], skips[3])
+        for up, skip in zip((n.upcat_3, n.upcat_2, n.upcat_1), skips[2::-1]):
+            u = up(u, skip)
+        return x[:, -self.k:] + n.final_conv(u)
+
+
+MODELS = {"unet25d": Residual, "unet25d_ctfm": CTFMResidual}
+
+
+def build(cfg: dict) -> Residual:
+    return MODELS[cfg["model"]["name"]](cfg)
 
 
 _loaded: dict = {}
@@ -40,7 +112,7 @@ def load(run) -> Residual:
         s = torch.load(path, map_location=DEVICE, weights_only=False)
         if s["cfg_hash"] != run.cfg_hash:
             raise RuntimeError(f"{path} was trained under config {s['cfg_hash']}, not {run.cfg_hash}")
-        model = Residual(run.cfg).to(DEVICE)
+        model = build(run.cfg).to(DEVICE)
         model.load_state_dict(s["model"])
         _loaded[path] = model.eval()
         run.log(f"loaded {path.name} (epoch {s['epoch']})")

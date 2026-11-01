@@ -5,7 +5,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy", "scipy", "SimpleITK", "pyyaml", "requests"]
 
 [project.optional-dependencies]
-train = ["torch", "monai", "pytorch-msssim"]
+train = ["torch", "monai", "pytorch-msssim", "huggingface_hub", "safetensors"]   # last two: CT-FM weights
 paper = ["matplotlib"]                 # scripts/make_figures.py
 
 [build-system]

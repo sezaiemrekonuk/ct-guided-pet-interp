@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler
 
 from petinterp.data.blocks import CACHED, block_input, cache
 from petinterp.losses.msssim_l1 import msssim_l1
-from petinterp.models.unet25d import DEVICE, Residual
+from petinterp.models.unet25d import DEVICE, build
 from petinterp.runtime import Run, write_json
 
 
@@ -78,7 +78,7 @@ def train(run: Run) -> list[dict]:
     va = Blocks(cache(run, split["val"]), cfg, train=False, stride=t["val_stride"])
 
     torch.manual_seed(t["seed"])
-    model = Residual(cfg).to(DEVICE)
+    model = build(cfg).to(DEVICE)
     opt = torch.optim.AdamW(model.parameters(), lr=t["lr"], weight_decay=t["weight_decay"])
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=t["epochs"])
     scaler = torch.amp.GradScaler(DEVICE.type, enabled=DEVICE.type == "cuda")

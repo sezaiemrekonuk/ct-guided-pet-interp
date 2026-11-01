@@ -4,6 +4,7 @@ Thick slice i averages thin slices i*k .. i*k+k-1, so the unit of prediction is 
 The network input stacks, on one 2D in-plane grid:
   PET   thick slices i-r .. i+r                    2r+1 channels, log-SUV
   CT    thin slices  i*k-c .. i*k+k-1+c            k+2c channels, HU -> [-1, 1]  (if use_ct)
+        or, with model.ct_slab = S, S thin slices centred on the block (the CT-FM branch)
   base  cubic_z prediction for the k target slices k channels, log-SUV         (always last)
 and the network predicts a residual on base. Indices past either end of the volume are clamped,
 so edge slices repeat.
@@ -52,9 +53,16 @@ def volumes(lr_suv: np.ndarray, ct_hu: np.ndarray, k: int, cfg: dict) -> dict:
             "ct": ct_fwd(ct_hu, d["ct_hu"])}
 
 
+def ct_z(i: int, k: int, m: dict) -> np.ndarray:
+    """Thin CT slice indices for thick slice i (unclamped): the block +- ct_context, or ct_slab."""
+    if "ct_slab" in m:
+        return i * k + (k - m["ct_slab"]) // 2 + np.arange(m["ct_slab"])
+    return np.arange(i * k - m["ct_context"], (i + 1) * k + m["ct_context"])
+
+
 def n_channels(cfg: dict) -> int:
     m, k = cfg["model"], cfg["k"]
-    return 2 * m["pet_context"] + 1 + (k + 2 * m["ct_context"] if m["use_ct"] else 0) + k
+    return 2 * m["pet_context"] + 1 + (len(ct_z(0, k, m)) if m["use_ct"] else 0) + k
 
 
 def block_input(v: dict, i: int, k: int, m: dict, yx=(slice(None), slice(None))) -> np.ndarray:
@@ -62,8 +70,7 @@ def block_input(v: dict, i: int, k: int, m: dict, yx=(slice(None), slice(None)))
     n = len(v["lr"])
     parts = [v["lr"][(np.clip(np.arange(i - m["pet_context"], i + m["pet_context"] + 1), 0, n - 1), *yx)]]
     if m["use_ct"]:
-        z = np.arange(i * k - m["ct_context"], (i + 1) * k + m["ct_context"])
-        parts.append(v["ct"][(np.clip(z, 0, n * k - 1), *yx)])
+        parts.append(v["ct"][(np.clip(ct_z(i, k, m), 0, n * k - 1), *yx)])
     parts.append(v["base"][(slice(i * k, (i + 1) * k), *yx)])
     return np.concatenate(parts).astype(np.float32)
 
