@@ -1,6 +1,7 @@
 """Smoke test of the learned-model path on a tiny synthetic cohort, CPU only:
 cache -> untrained net == cubic baseline -> train -> resume -> evaluate. The CT-FM variant runs
-with a small randomly initialised encoder in place of the 77.8M-parameter download.
+with a small randomly initialised encoder in place of the 77.8M-parameter download; it
+has CT-FM's five levels and z depths 16/8/4/2/1 on a 16-slice slab.
 
     pip install -e .[train] pytest && pytest tests
 """
@@ -45,7 +46,7 @@ def _cohort(root, rng, k):
     (proc / "split_v1.json").write_text(json.dumps(CASES))
 
 
-@pytest.mark.parametrize("config", ["p4_unet_k2", "p5_unet_ctfm_k2"])
+@pytest.mark.parametrize("config", ["p4_unet_k2", "p5_unet_ctfm_k2", "p5_unet_ctfmz_k2"])
 @pytest.mark.parametrize("k", [2, 3, 4])
 def test_unet25d_end_to_end(tmp_path, monkeypatch, k, config):
     _cohort(tmp_path, np.random.default_rng(0), k)
@@ -76,3 +77,28 @@ def test_unet25d_end_to_end(tmp_path, monkeypatch, k, config):
     m = evaluate(run)
     assert m["consistency"]["n_patients"] == 1
     assert np.isfinite(m["consistency"]["global"]["psnr"]["mean"])
+
+
+ROWS = {2: [[6, 7, 8, 9], [3, 4, 5], [2], [1], [0]],          # block = slab slices 7..8
+        3: [[6, 7, 8, 9, 10], [3, 4, 5], [2, 3], [1], [0]],   # 7..9
+        4: [[5, 6, 7, 8, 9, 10], [3, 4, 5], [1, 2, 3], [1], [0]]}  # 6..9
+
+
+@pytest.mark.parametrize("k", [2, 3, 4])
+def test_ctfm_block_rows(monkeypatch, k):
+    """z: block keeps the CT-FM rows on the block +- 1 thin slice; z-mean keeps one per level."""
+    monkeypatch.setattr(U, "ctfm_encoder", lambda c: SegResEncoder(init_filters=2, blocks_down=(1, 1, 1, 1, 1)))
+    cfgs = {}
+    for name in ("p5_unet_ctfm", "p5_unet_ctfmz"):
+        cfgs[name] = cfg = yaml.safe_load((rt.REPO / f"configs/{name}_k{k}.yaml").read_text(encoding="utf-8"))
+        cfg["model"]["features"] = [4, 4, 8, 8, 16, 4]
+    mean, block = U.build(cfgs["p5_unet_ctfm"]), U.build(cfgs["p5_unet_ctfmz"])
+    assert mean.rows is None and block.rows == ROWS[k]
+    chans = [2, 4, 8, 16, 32]                                   # the small encoder's widths
+    assert [p.in_channels for p in mean.proj] == chans
+    assert [p.in_channels for p in block.proj] == [c * len(r) for c, r in zip(chans, ROWS[k])]
+
+    x = torch.randn(2, U.n_channels(cfgs["p5_unet_ctfmz"]), 32, 32)
+    for p in block.proj.parameters():                           # untrained: exactly the base
+        assert not p.any()
+    torch.testing.assert_close(block.eval()(x), x[:, -k:])
