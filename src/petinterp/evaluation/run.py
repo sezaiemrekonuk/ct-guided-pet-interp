@@ -12,7 +12,7 @@ import numpy as np
 
 from petinterp.data import volumes as V
 from petinterp.data.degrade import consistency, crop
-from petinterp.evaluation.metrics import aggregate, evaluate_case
+from petinterp.evaluation.metrics import aggregate, evaluate_case, patient_lesions
 from petinterp.models.classical import MODELS
 from petinterp.runtime import Run, write_json
 
@@ -60,7 +60,8 @@ def evaluate(run: Run) -> dict:
         "exp_id": cfg["exp_id"], "model": cfg["model"]["name"], "k": cfg["k"],
         "subset": cfg.get("subset", "test"), "config_hash": run.cfg_hash,
         **{v: aggregate({c: per[c][v] for c in cases}) for v in VARIANTS},
-        "per_patient": {c: {v: {m: per[c][v][m] for m in ("psnr", "ssim", "nrmse")} for v in VARIANTS}
+        "per_patient": {c: {v: {**{m: per[c][v][m] for m in ("psnr", "ssim", "nrmse")},
+                                "lesions": patient_lesions(per[c][v]["lesions"])} for v in VARIANTS}
                         for c in cases},
     }
     write_json(run.dir / "metrics.json", metrics)

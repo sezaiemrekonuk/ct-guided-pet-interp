@@ -5,6 +5,11 @@ PSNR and SSIM use data_range = the patient's ground-truth SUVmax inside the body
 NRMSE = ||pred - gt|| / ||gt|| over body voxels.
 Lesions are the 26-connected components of the TTB mask; each gets SUVmax/SUVmean bias,
 volume, and distance to the bladder mask.
+
+Lesion results are aggregated two ways. Pooled over lesions, every lesion counts once, so a
+patient with hundreds of lesions dominates and the lesions are not independent. By patient,
+each patient's lesions are summarised by their median, and those patient values are what a
+patient-paired test compares.
 """
 
 from __future__ import annotations
@@ -55,6 +60,31 @@ def lesions(pred, gt, ttb, bladder, spacing_zyx):
     return out
 
 
+LESION_METRICS = ("suvmax_bias", "suvmax_abs_bias", "suvmean_bias")
+
+
+def lesion_groups(les: list[dict]) -> dict[str, list[dict]]:
+    """The reported lesion strata: all, small (<1 mL), bladder-adjacent (<2 cm)."""
+    return {
+        "all": les,
+        "small_lt_1ml": [l for l in les if l["volume_ml"] < SMALL_ML],
+        "bladder_adjacent_lt_2cm": [l for l in les if l["bladder_mm"] is not None
+                                    and l["bladder_mm"] < BLADDER_MM],
+    }
+
+
+def _lesion_value(l: dict, metric: str) -> float:
+    return abs(l["suvmax_bias"]) if metric == "suvmax_abs_bias" else l[metric]
+
+
+def patient_lesions(les: list[dict]) -> dict[str, dict]:
+    """One patient's lesions -> per stratum: lesion count and the median of each lesion metric
+    (None when the patient has no lesion in that stratum)."""
+    return {name: {"n": len(g), **{m: float(np.median([_lesion_value(l, m) for l in g])) if g else None
+                                   for m in LESION_METRICS}}
+            for name, g in lesion_groups(les).items()}
+
+
 def evaluate_case(pred, gt, body, ttb, bladder, spacing_zyx) -> dict:
     body = body.astype(bool)
     dr = float(gt[body].max())
@@ -78,10 +108,11 @@ def _stats(x):
 def wilcoxon_paired(a: dict[str, dict], b: dict[str, dict], metric: str, n_tests: int = 1) -> dict:
     """Patient-paired Wilcoxon signed-rank of a per-patient metric, a vs b, Bonferroni over n_tests.
 
-    a, b: case -> {metric: value}, e.g. metrics.json per_patient[case]["consistency"].
+    a, b: case -> {metric: value}, e.g. metrics.json per_patient[case]["consistency"]. A case
+    whose value is None in either arm (no lesion in that stratum) is left out of the pairing.
     """
     from scipy.stats import wilcoxon
-    cases = sorted(set(a) & set(b))
+    cases = sorted(c for c in set(a) & set(b) if a[c][metric] is not None and b[c][metric] is not None)
     d = np.array([a[c][metric] - b[c][metric] for c in cases])
     p = float(wilcoxon(d).pvalue)
     return {"n": len(cases), "median_diff": float(np.median(d)), "n_a_greater": int((d > 0).sum()),
@@ -89,19 +120,15 @@ def wilcoxon_paired(a: dict[str, dict], b: dict[str, dict], metric: str, n_tests
 
 
 def aggregate(per_patient: dict[str, dict]) -> dict:
-    """Patient-level means for global metrics; lesion-level stats per subgroup."""
+    """Patient-level means for global metrics; lesion stats per stratum, pooled over lesions
+    ("lesions") and over patient medians ("lesions_by_patient")."""
     les = [l for r in per_patient.values() for l in r["lesions"]]
-    groups = {
-        "all": les,
-        "small_lt_1ml": [l for l in les if l["volume_ml"] < SMALL_ML],
-        "bladder_adjacent_lt_2cm": [l for l in les if l["bladder_mm"] is not None
-                                    and l["bladder_mm"] < BLADDER_MM],
-    }
+    by_patient = [patient_lesions(r["lesions"]) for r in per_patient.values()]
     return {
         "n_patients": len(per_patient),
         "global": {m: _stats(r[m] for r in per_patient.values()) for m in ("psnr", "ssim", "nrmse")},
-        "lesions": {name: {"suvmax_bias": _stats(l["suvmax_bias"] for l in g),
-                           "suvmax_abs_bias": _stats(abs(l["suvmax_bias"]) for l in g),
-                           "suvmean_bias": _stats(l["suvmean_bias"] for l in g)}
-                    for name, g in groups.items()},
+        "lesions": {name: {m: _stats(_lesion_value(l, m) for l in g) for m in LESION_METRICS}
+                    for name, g in lesion_groups(les).items()},
+        "lesions_by_patient": {name: {m: _stats(p[name][m] for p in by_patient) for m in LESION_METRICS}
+                               for name in lesion_groups([])},
     }
