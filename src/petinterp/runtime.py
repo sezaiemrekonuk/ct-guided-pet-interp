@@ -106,22 +106,49 @@ def start(config: str) -> Run:
     return run
 
 
-def archive_notebook(dest: Path) -> None:
-    """The running Colab notebook, outputs included -> dest/notebook.html (rule 11).
+def archive_notebook(dest: Path, ipynb: Path | None = None) -> None:
+    """The executed notebook, outputs included -> dest/notebook.html (rule 11).
+
+    Without ipynb it asks the open Colab browser tab for the running notebook. A run launched
+    through the Colab CLI has no tab. There the notebook is executed headless with
+    $PETINTERP_DEFER_ARCHIVE set to a file, so this call only records dest in that file, and
+    archive_pending() writes the archives from the executed notebook once it has finished.
+    There is no silent fallback: with no tab and no deferral it raises.
 
     Takes a directory, not a Run: re-starting an old run just to archive it would overwrite its
     provenance.json with the current commit.
     """
     import nbformat
-    from google.colab import _message
     from nbconvert import HTMLExporter
 
-    nb = _message.blocking_request("get_ipynb", timeout_sec=120)["ipynb"]
+    pending = os.environ.get("PETINTERP_DEFER_ARCHIVE")
+    if ipynb is None and pending:
+        with open(pending, "a", encoding="utf-8") as f:
+            f.write(f"{dest}\n")
+        print(f"archive of {dest} deferred to {pending}")
+        return
+    if ipynb is not None:
+        text = Path(ipynb).read_text(encoding="utf-8")
+    else:
+        from google.colab import _message
+        reply = _message.blocking_request("get_ipynb", timeout_sec=120)
+        if reply is None:
+            raise RuntimeError("no Colab browser tab answered get_ipynb; a run without one (the "
+                               "Colab CLI) sets PETINTERP_DEFER_ARCHIVE or passes ipynb=")
+        text = json.dumps(reply["ipynb"])
     # reads(), not from_dict(): Colab sends sources as lists of lines, which nbconvert rejects
-    html, _ = HTMLExporter().from_notebook_node(nbformat.reads(json.dumps(nb), as_version=4))
+    html, _ = HTMLExporter().from_notebook_node(nbformat.reads(text, as_version=4))
     tmp = Path(dest) / "notebook.html.tmp"
     tmp.write_text(html, encoding="utf-8")
     os.replace(tmp, Path(dest) / "notebook.html")
+
+
+def archive_pending(pending: Path, ipynb: Path) -> list[Path]:
+    """Archive every run directory deferred to `pending` from the executed notebook `ipynb`."""
+    dests = list(dict.fromkeys(Path(p) for p in Path(pending).read_text(encoding="utf-8").split("\n") if p))
+    for d in dests:
+        archive_notebook(d, ipynb=ipynb)
+    return dests
 
 
 def _gpu() -> str:
