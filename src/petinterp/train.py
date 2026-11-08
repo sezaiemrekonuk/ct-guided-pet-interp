@@ -28,7 +28,8 @@ class Blocks(Dataset):
 
     def __init__(self, dirs, cfg: dict, train: bool, stride: int = 1):
         self.cfg, self.k, self.train = cfg, cfg["k"], train
-        self.vols = [{n: np.load(d / f"{n}.npy", mmap_mode="r") for n in CACHED} for d in dirs]
+        self.vols = [{n: np.load(d / f"{n}.npy", mmap_mode="r") for n in (*CACHED, "ctn")
+                      if (d / f"{n}.npy").exists()} for d in dirs]
         self.index = [(j, i) for j, v in enumerate(self.vols) for i in range(0, len(v["lr"]), stride)]
 
     def __len__(self):
@@ -42,12 +43,17 @@ class Blocks(Dataset):
             y0, x0 = int(torch.randint(h - p + 1, ())), int(torch.randint(w - p + 1, ()))
         else:
             y0, x0 = (h - p) // 2, (w - p) // 2
-        zyx = (slice(i * k, (i + 1) * k), slice(y0, y0 + p), slice(x0, x0 + p))
-        x = block_input(v, i, k, self.cfg["model"], zyx[1:])
-        t = v["hr"][zyx].astype(np.float32)
-        wt = 1 + (self.cfg["loss"]["lesion_weight"] - 1) * v["ttb"][zyx].astype(np.float32)
-        if self.train and torch.rand(()) < 0.5:  # L-R is the last array axis
-            x, t, wt = x[..., ::-1], t[..., ::-1], wt[..., ::-1]
+        flip = self.train and torch.rand(()) < 0.5  # L-R is the last array axis
+
+        def view(a):  # the same field of view on every grid: an s-times finer array gets s*y0..
+            s = a.shape[1] // h
+            a = a[:, s * y0:s * (y0 + p), s * x0:s * (x0 + p)]
+            return a[..., ::-1] if flip else a
+
+        v = {n: view(a) for n, a in v.items()}
+        x = block_input(v, i, k, self.cfg["model"])
+        t = v["hr"][i * k:(i + 1) * k].astype(np.float32)
+        wt = 1 + (self.cfg["loss"]["lesion_weight"] - 1) * v["ttb"][i * k:(i + 1) * k].astype(np.float32)
         return tuple(torch.from_numpy(np.ascontiguousarray(a)) for a in (x, t, wt))
 
 

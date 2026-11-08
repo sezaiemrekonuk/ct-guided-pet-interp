@@ -4,7 +4,8 @@ Output = cubic_z base + learned residual. The last conv starts at zero, so the u
 is exactly the cubic baseline and training can only move away from it where that helps.
 use_ct: false gives the no-CT arm of the main ablation with everything else identical.
 name: unet25d_ctfm swaps the raw CT channels for features of the frozen CT-FM encoder,
-z-averaged (ctfm.z absent or "mean") or kept per block slice (ctfm.z: block).
+z-averaged (ctfm.z absent or "mean") or kept per block slice (ctfm.z: block), and fed either the
+CT on the PET grid or, with ctfm.ct_scale, the native-resolution CT of data/ct_native.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ import torch.nn.functional as F
 from monai.networks.nets import BasicUNet
 from torch import nn
 
-from petinterp.data.blocks import block_input, ct_z, n_channels, pet_inv, volumes
+from petinterp.data.blocks import block_input, ct_scale, ct_z, n_channels, pet_inv, volumes
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -80,12 +81,19 @@ class CTFMResidual(Residual):
     +- ctfm.z_context and stacks them as channels, so where in z an anatomical edge falls
     survives into the U-Net, as it does for the raw CT channels of p4_unet_k*. The deep levels
     have one or two rows over the slab and differ little between the two.
+
+    ctfm.ct_scale = s feeds CT-FM the native-resolution CT instead (data/ct_native: s x s CT
+    pixels per PET pixel, clipped only at CT-FM's own window), which arrives packed as S*s*s
+    channels on the PET grid and is unpacked here. Every CT-FM level is then s times the U-Net
+    level in-plane, so the pooling averages exactly the CT pixels under each PET pixel. CT-FM
+    runs one sample at a time there: its first level alone is 0.6 GB per 192-pixel patch.
     """
 
     def __init__(self, cfg: dict):
         m, c, k = cfg["model"], cfg["model"]["ctfm"], cfg["k"]
-        super().__init__(cfg, in_channels=n_channels(cfg) - m["ct_slab"])
-        self.pet, self.slab = 2 * m["pet_context"] + 1, m["ct_slab"]
+        scale = ct_scale(m)
+        super().__init__(cfg, in_channels=n_channels(cfg) - m["ct_slab"] * (scale or 1) ** 2)
+        self.pet, self.slab, self.scale = 2 * m["pet_context"] + 1, m["ct_slab"], scale
         self.hu, self.window = cfg["data"]["ct_hu"], c["hu"]
         self.ctfm = ctfm_encoder(c).requires_grad_(False)
         with torch.no_grad():
@@ -116,15 +124,25 @@ class CTFMResidual(Residual):
         return self
 
     def forward(self, x):
-        p, s, (lo, hi), (a, b) = self.pet, self.slab, self.hu, self.window
-        hu = (x[:, p:p + s] + 1) / 2 * (hi - lo) + lo  # back from [-1, 1] to HU, then CT-FM's window
-        with torch.no_grad():
-            feats = self.ctfm(((hu.clamp(a, b) - a) / (b - a)).unsqueeze(1))
+        p, (lo, hi), (a, b) = self.pet, self.hu, self.window
+        if self.scale:  # packed native CT, already in CT-FM's window as [-1, 1]
+            s = self.slab * self.scale ** 2
+            ct, chunk = (F.pixel_shuffle(x[:, p:p + s], self.scale) + 1) / 2, 1
+        else:
+            s = self.slab
+            hu = (x[:, p:p + s] + 1) / 2 * (hi - lo) + lo  # back from [-1, 1] to HU, then CT-FM's window
+            ct, chunk = (hu.clamp(a, b) - a) / (b - a), len(x)
+        hws = [tuple(x.shape[-2:])]  # in-plane size of each U-Net level: BasicUNet max-pools by 2
+        for _ in range(4):
+            hws.append((hws[-1][0] // 2, hws[-1][1] // 2))
+        with torch.no_grad():  # pooled per chunk, so CT-FM's full-size levels never pile up
+            parts = [[self._ct(f, i, hw) for i, (f, hw) in enumerate(zip(self.ctfm(c), hws))]
+                     for c in ct.unsqueeze(1).split(chunk)]
+        feats = [torch.cat(level) for level in zip(*parts)]
         n, h, skips = self.net, torch.cat([x[:, :p], x[:, p + s:]], 1), []
-        for i, (layer, f, proj) in enumerate(zip((n.conv_0, n.down_1, n.down_2, n.down_3, n.down_4),
-                                                 feats, self.proj)):
+        for layer, f, proj in zip((n.conv_0, n.down_1, n.down_2, n.down_3, n.down_4), feats, self.proj):
             h = layer(h)
-            h = h + proj(self._ct(f, i, h.shape[-2:]).to(h.dtype))
+            h = h + proj(f.to(h.dtype))
             skips.append(h)
         u = n.upcat_4(skips[4], skips[3])
         for up, skip in zip((n.upcat_3, n.upcat_2, n.upcat_1), skips[2::-1]):
@@ -157,10 +175,11 @@ def load(run) -> Residual:
 
 
 @torch.no_grad()
-def predict(run, lr: np.ndarray, ct_hu: np.ndarray) -> np.ndarray:
-    """Thick SUV [D/k,H,W] + CT HU on the thin grid [D,H,W] -> thin SUV [D,H,W], full slices."""
+def predict(run, lr: np.ndarray, ct_hu: np.ndarray, ctn_hu: np.ndarray | None = None) -> np.ndarray:
+    """Thick SUV [D/k,H,W] + CT HU on the thin grid [D,H,W] (+ native CT [D,sH,sW]) -> thin SUV
+    [D,H,W], full slices."""
     cfg, k, bs = run.cfg, run.cfg["k"], run.cfg["eval"]["batch"]
-    model, v = load(run), volumes(lr, ct_hu, k, cfg)
+    model, v = load(run), volumes(lr, ct_hu, k, cfg, ctn_hu)
     out = v["base"].copy()
     for s in range(0, len(lr), bs):
         ii = range(s, min(s + bs, len(lr)))

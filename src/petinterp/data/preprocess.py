@@ -1,4 +1,5 @@
-"""DEEP-PSMA archives -> data/processed/<version>/<case>/, then the frozen patient-level split.
+"""DEEP-PSMA archives -> data/processed/<version>/<case>/, then the frozen patient-level split;
+ct_native() derives the native-resolution CT of the CT-FM branch from the same archives.
 
 Per case (one tracer): PET in SUV as shipped, CT resampled onto the PET grid (never the
 reverse), TTB lesion mask, TotalSegmentator labels on the PET grid, a CT body mask, and qc.json.
@@ -198,4 +199,72 @@ def make_split(run: Run, qcs: list[dict]) -> dict:
         else:
             write_json(path, doc)
     run.log(f"split: {', '.join(f'{k}={len(v)}' for k, v in split.items())}")
+    return doc
+
+
+def fine_grid(ref: sitk.Image, s: int) -> sitk.Image:
+    """ref's geometry with every in-plane pixel split s x s, z unchanged: pixel (x, y) of ref is
+    covered exactly by fine pixels s*x .. s*x+s-1 and s*y .. s*y+s-1."""
+    (nx, ny, nz), (sx, sy, sz) = ref.GetSize(), ref.GetSpacing()
+    img = sitk.Image(nx * s, ny * s, nz, sitk.sitkInt16)
+    img.SetSpacing((sx / s, sy / s, sz))
+    img.SetDirection(ref.GetDirection())
+    o = (1 / s - 1) / 2  # centre of fine pixel 0 in ref's index units: -1/2 + 1/(2s)
+    img.SetOrigin(ref.TransformContinuousIndexToPhysicalPoint((o, o, 0)))
+    return img
+
+
+def ct_native(run: Run) -> dict:
+    """Native-resolution CT for the CT-FM branch -> <output>/<case>.nii.gz, one file per patient.
+
+    CT from the archives onto the PET grid split factor x factor in-plane (so ~1 mm for a 4 mm
+    PET pixel at factor 4) on the PET's own thin z planes, clipped only at CT-FM's HU window. The
+    CT stays on the PET's z planes because the block indexing (blocks.ct_z) is defined on them.
+    <case>.json is written last and marks a finished patient. It records how far the native CT,
+    averaged back over each PET pixel, is from the processed CT inside the body: an alignment
+    check on real data, since half a PET pixel of shift would show up there first.
+    """
+    cfg, f, (lo, hi) = run.cfg, run.cfg["factor"], run.cfg["hu"]
+    src, out = run.path(cfg["input"]), run.path(cfg["output"])
+    out.mkdir(parents=True, exist_ok=True)
+    _freeze_guard(out, run)
+    split = json.loads((src / cfg["split_file"]).read_text(encoding="utf-8"))
+    cases = sorted(split["train"] + split["val"] + split["test"])
+    zips = _cases(run.path(cfg["source"]["archives"]), cfg["source"]["tracer"])
+    for i, case in enumerate(cases, 1):
+        if (out / f"{case}.json").exists():
+            continue
+        zp, prefix = zips[case]
+        with tempfile.TemporaryDirectory() as tmp, zipfile.ZipFile(zp) as z:
+            z.extract(prefix + "CT.nii.gz", tmp)
+            ct = V.read(Path(tmp) / prefix / "CT.nii.gz")
+        # Clipped before resampling: linear interpolation stays inside [lo, hi], and int16 keeps
+        # the fine volume at 2 bytes a voxel.
+        ct = sitk.Cast(sitk.Clamp(ct, lowerBound=lo, upperBound=hi), sitk.sitkInt16)
+        pet = V.read(src / case / "pet.nii.gz")
+        native = _onto(ct, fine_grid(pet, f), sitk.sitkLinear, lo)
+        V.write(native, out / f"{case}.nii.gz")
+
+        a = sitk.GetArrayViewFromImage(native)  # a view: no second copy of the fine volume in RAM
+        back = a.reshape(a.shape[0], a.shape[1] // f, f, a.shape[2] // f, f).mean(axis=(2, 4))
+        body = V.array(V.read(src / case / "body.nii.gz")) > 0
+        v1 = np.clip(V.array(V.read(src / case / "ct.nii.gz")), -1000, 1000)
+        rec = {"case": case, "size_xyz": native.GetSize(), "spacing_mm": native.GetSpacing(),
+               "mb": round((out / f"{case}.nii.gz").stat().st_size / 2 ** 20, 1),
+               "mae_hu_vs_processed_in_body": float(np.abs(np.clip(back, -1000, 1000) - v1)[body].mean())}
+        write_json(out / f"{case}.json", rec)
+        run.log(f"[{i}/{len(cases)}] {case} {rec['size_xyz']} at {[round(x, 2) for x in rec['spacing_mm']]} mm, "
+                f"{rec['mb']} MB, MAE vs processed CT {rec['mae_hu_vs_processed_in_body']:.1f} HU")
+
+    recs = [json.loads((out / f"{c}.json").read_text(encoding="utf-8")) for c in cases]
+    mae = np.array([r["mae_hu_vs_processed_in_body"] for r in recs])
+    doc = {"status": "complete", "config_hash": run.cfg_hash, "config": cfg,
+           "date": dt.date.today().isoformat(), "source": cfg["input"], "n_patients": len(recs),
+           "excluded": {}, "factor": f, "hu": [lo, hi],
+           "gb_on_disk": round(sum(r["mb"] for r in recs) / 1024, 2),
+           "mae_hu_vs_processed_in_body": {"median": float(np.median(mae)), "max": float(mae.max()),
+                                           "worst_case": recs[int(mae.argmax())]["case"]}}
+    write_json(out / "manifest.json", doc)
+    run.log(f"done: {len(recs)} patients, {doc['gb_on_disk']} GB, MAE vs processed CT median "
+            f"{doc['mae_hu_vs_processed_in_body']['median']:.1f} HU (max {mae.max():.1f}, {doc['mae_hu_vs_processed_in_body']['worst_case']})")
     return doc

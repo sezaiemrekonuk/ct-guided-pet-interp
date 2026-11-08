@@ -1,0 +1,13 @@
+# Native-resolution CT for the CT-FM branch (ablation pre-registered 2026-11-01, log 2026-11-08):
+# CT-FM was pretrained at about 1 x 1 x 3 mm, the CT in data/processed/v1 sits on the ~4 mm PET
+# grid. Per patient: the CT from the archives onto the PET grid split factor x factor in-plane,
+# on the PET's own thin z planes, clipped at CT-FM's window instead of +-1000. Frozen once complete.
+exp_id: p5_ct_native_v1
+source:
+  archives: data/raw/deep_psma        # the zips from download.ipynb, read in place
+  tracer: PSMA
+input: data/processed/v1              # PET grid, body mask and processed CT of every split patient
+split_file: split_v1.json
+output: data/ct_native/v1
+factor: 4                             # CT pixels per PET pixel and axis: 4.07 mm -> 1.02 mm
+hu: [-1024, 2048]                     # CT-FM's own HU window; air outside the CT field is -1024

@@ -28,8 +28,9 @@ def predict_case(run: Run, case: str) -> dict:
     if cfg["model"]["name"] in MODELS:
         raw = MODELS[cfg["model"]["name"]](lr, k)
     else:  # learned model: torch is imported only here, so classical runs need no GPU stack
+        from petinterp.data.blocks import read_ct_native
         from petinterp.models.unet25d import predict
-        raw = predict(run, lr, crop(V.array(V.read(proc / "ct.nii.gz")), k))
+        raw = predict(run, lr, crop(V.array(V.read(proc / "ct.nii.gz")), k), read_ct_native(run, case, k))
     preds = {"raw": raw, "consistency": consistency(raw, lr, k)}
 
     body = crop(V.array(V.read(proc / "body.nii.gz")), k)

@@ -809,3 +809,70 @@ coarser than anything it learned on. Feeding it CT at its native in-plane resolu
 run. If CT-FM still doesn't beat no CT after that, the honest conclusion is that at these
 thicknesses the PET itself carries what the interpolation needs, and that's a result for the
 Discussion. Tables are main_p5_k* and stats_ctfm{,z}_vs_{noct,ct}_k* in paper/tables/.
+
+## 2026-11-08 (evening) — Wiring native-resolution CT into CT-FM
+
+This afternoon's result left one obvious suspect, and I wrote it down a week ago before any run
+existed: CT-FM was pretrained at about 1 × 1 × 3 mm, and we feed it the CT that preprocessing put
+onto the PET grid, about 4 mm in-plane. A 3D encoder that learned what a vessel wall or the edge of
+a vertebra looks like at 1 mm sees blurred blocks four times coarser than anything it trained on.
+My hypothesis for this ablation is that CT-FM's features only start carrying information the PET
+lacks once they're computed at the resolution they were learned at. If that's right, the native
+runs should beat the no-CT U-Net where the current CT-FM runs only tie it. If they don't, I'd take
+that as fairly strong evidence that at these slice thicknesses the PET itself carries what the
+interpolation needs, and stop pushing the CT branch. The second compromise gets fixed at the same
+time: the processed CT is clipped at +1000 HU, so CT-FM never saw dense bone, though its window
+goes up to 2048. That means this ablation changes two things at once, resolution and HU window. I
+accepted that because the window is CT-FM's own and splitting the two would cost another six runs
+of this size.
+
+Nothing in data/processed/v1 changes. The native CT is a new frozen version, data/ct_native/v1,
+written by its own config (p5_ct_native_v1) from the same DEEP-PSMA zips. Each patient gets one
+file, the stage skips patients that are already done, every file is written atomically, and a
+manifest.json records the config hash, the date, the patient count and the size on disk. The
+biggest decision was the grid. I didn't resample to exactly 1 mm. Each PET pixel is split into 4 × 4
+CT pixels instead, so PET pixel (y, x) is exactly CT pixels 4y to 4y+3 and 4x to 4x+3. At our
+4.07 mm PET pixel that gives 1.02 mm, which is CT-FM's resolution. A fixed integer factor has two
+advantages over a physical 1 mm. Every batch has the same CT-to-PET size ratio, so training patches
+of different patients still stack. And each CT-FM feature level comes out exactly four times the
+matching U-Net level, so the pooling that was already there averages exactly the CT pixels under
+each PET pixel, with no interpolation between the two grids. The cost is that the cohort's PET
+grids vary (128 to 512 pixels), so on a fine PET grid four sub-pixels are finer than the CT itself.
+That adds no information, only interpolated pixels and disk space. I couldn't check how many patients
+that affects, because the per-patient spacings are in qc_summary.json on Drive, and the manifest's
+size on disk will tell us. In z I kept the PET's thin planes. Our thin spacing runs from 1.5 to 5 mm,
+which brackets CT-FM's 3 mm. More importantly, the block indexing and the measurement consistency
+are defined on those planes, so resampling z would have meant a second geometry for nothing. The CT
+is clipped at CT-FM's window [−1024, 2048] before resampling and stored as int16.
+
+On the model side it's the same CTFMResidual with one new config key, ctfm.ct_scale: 4. The six
+configs p5_unet_ctfm_native_k* and p5_unet_ctfmz_native_k* are their p5 twins line for line, plus
+that key and the path to the new data, so the comparison isolates the CT input. Getting a 768 × 768
+CT patch through a loader built around one stack of channels on the PET grid took one trick. The
+native slab is packed space-to-depth into 16 × 16 = 256 channels on the PET grid, and the model
+unpacks it with pixel_shuffle before CT-FM. The left-right flip has to happen on the fine grid,
+before that packing, so the loader now crops and flips every array first and stacks them
+afterwards. I checked that this reorder is harmless: the p4 and p5 model outputs and the loader's
+random training samples are bitwise identical before and after the change, and their configs and
+caches are untouched. The projections still start at zero, so the untrained native model is still
+exactly the cubic baseline.
+
+The cost is the real worry. One 16 × 768 × 768 slab through CT-FM is 3.65 TFLOP, sixteen times the
+0.23 of the 4 mm version, and its first level alone is 0.6 GB per patch in half precision. At batch
+16 that's about 58 TFLOP of frozen forward pass per step. So I run CT-FM one sample at a time and
+pool each sample's levels down before the next, and the batch, the loss and the training schedule
+stay exactly as in p5. My estimate is several A100-hours per run against the 45 minutes the p5 runs
+took, and the local cache grows by roughly 0.65 GB per patient at the 4 mm grid.
+
+What I verified: the full test suite passes on CPU with a tiny stand-in encoder, including
+end-to-end train, resume and evaluate for both native configs at k = 2, 3 and 4. For alignment I
+built a synthetic archive whose CT is a linear ramp in HU, steep enough that a one-millimetre shift
+moves it by 6 to 8 HU, and ran the real preprocessing stage on it. Averaged over each PET pixel, the
+native CT matches the CT on the PET grid to within 1.5 HU, both on disk and in what CT-FM actually
+receives after the random crop, the flip, the padding and the packing. I broke the alignment on
+purpose twice, once by shifting the grid origin and once by shifting the crop one CT pixel, and the
+test failed both times. A CPU forward of the real CT-FM architecture on one native patch also works,
+with random weights since nothing was downloaded. Nothing has run on real data yet. Next is
+01_preprocess cells 5 and 6 to build data/ct_native/v1, then checking its alignment numbers and size
+in the manifest, then only the two k = 4 runs in 03_train, z-resolved first. At several A100-hours
+per run I want to see k = 4 beat the no-CT U-Net before spending on k = 3 and k = 2.
