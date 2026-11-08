@@ -770,3 +770,42 @@ sees dense bone above that, though it was trained up to 2048.
 Configs are p5_unet_ctfm_k2/3/4 with the CT-FM weights pinned to Hugging Face revision 527b0d1.
 I checked locally that the real weights load into MONAI's own SegResEncoder with every key and
 shape matching, and the smoke test passes at all three k. No training run yet.
+
+## 2026-11-08 — CT-FM trained at k = 2, 3, 4: it fixes the CT branch, but doesn't beat no CT
+
+I ran all six p5 configs today in one Colab session on an A100, through 03_train: the z-mean
+CT-FM branch (p5_unet_ctfm_k*) and Seçkin's z-resolved twin (p5_unet_ctfmz_k*), which keeps the
+CT-FM rows that sit on the block's own slices instead of averaging over the slab. Every run is at
+sha 80fbbb3 with a clean tree, one seed each, 50 epochs, and each took about 45 minutes including
+the test evaluation. Getting it started cost more than the training: the Drive mount kept timing
+out because nobody finished the Google sign-in popup in time. The runtime disconnected later in the
+afternoon, but by then all six had finished and archived their notebooks, so nothing was lost.
+
+My hypothesis was that the raw-CT channels were hurting us because the U-Net had to learn what CT
+means from 70 patients, and that a pretrained CT representation would turn the CT from a cost into
+a gain. Half of that held. Against the raw-CT U-Net, CT-FM wins at every k: with consistency,
+z-mean CT-FM beats it on PSNR in 20 of 21 test patients at k = 2 (57.52 vs 56.97 dB, Bonferroni
+p = 0.0007), 18/21 at k = 3 (p = 0.027) and 17/21 at k = 4 (p = 0.047). So the damage the raw CT
+did is mostly gone. But against the U-Net that sees no CT at all, CT-FM is level at k = 2 and k = 3
+(PSNR 57.52 vs 57.48 and 51.42 vs 51.58, p = 1 and 0.73) and only slightly ahead at k = 4. The
+best single number is z-resolved CT-FM at k = 4: 48.16 dB against 47.91 for the three no-CT seeds,
+14 of 21 patients better, p = 0.042 on PSNR, and SSIM better in 18/21 (p = 0.0009). The z-resolved
+version is worse than z-mean at k = 2 (57.06 vs 57.52) and about equal at k = 3. Lesions tell the
+same story: SUVmax bias with consistency is −2.1 % (z-mean) against −1.8 to −2.3 % for no CT at
+k = 2, −7.1 to −7.4 % against −7.1 to −7.8 % at k = 3, and −12.1 % (z-resolved) against −12.4 to
+−12.8 % at k = 4. Small lesions are still about 5, 15 and 23 % too dim at k = 2, 3, 4 whatever we
+feed in.
+
+Two caveats before anyone reads more into this. The CT-FM arms are one seed against three, and the
+no-CT seeds themselves spread by 0.1 to 0.2 dB, so the k = 4 edge is within what a different seed
+could produce. And the patient-paired lesion tests didn't run: the p4 metrics.json files predate
+the per-patient lesion summaries, so make_tables skipped them. Re-evaluating the p4 runs would fix
+that.
+
+So the decision: CT-FM as we feed it now is not the result we hoped for, and I'm not adding seeds
+to it yet. The first suspect is the one I wrote down when wiring it in: CT-FM was pretrained at
+1 × 1 × 3 mm and we give it CT resampled onto the 4 mm PET grid, so it sees anatomy four times
+coarser than anything it learned on. Feeding it CT at its native in-plane resolution is the next
+run. If CT-FM still doesn't beat no CT after that, the honest conclusion is that at these
+thicknesses the PET itself carries what the interpolation needs, and that's a result for the
+Discussion. Tables are main_p5_k* and stats_ctfm{,z}_vs_{noct,ct}_k* in paper/tables/.
