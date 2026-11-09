@@ -1,0 +1,18 @@
+\begin{tabular}{lllrrrrrrr}
+\toprule
+a & b & seeds & variant & metric & mean a & mean b & median a-b & a better & p (Bonferroni) \\
+\midrule
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & PSNR (dB) & 47.93 & 47.86 & 0.1354 & 14/21 & 1 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & SSIM & 0.9950 & 0.9949 & 0.000024 & 14/21 & 0.13 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & NRMSE & 0.1475 & 0.1490 & -0.000933 & 14/21 & 0.73 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & SUVmax bias (\%), all lesions, patient median & -9.9 & -11.1 & 1.06 & 11/21 & 0.21 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & SUVmax bias (\%), $<$1 mL, patient median & -18.5 & -20.2 & 1.51 & 16/20 & 0.046 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & raw & SUVmax bias (\%), bladder $<$2 cm, patient median & -4.7 & -6.1 & 0.36 & 6/16 & 1 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & PSNR (dB) & 48.13 & 48.08 & 0.0973 & 14/21 & 1 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & SSIM & 0.9950 & 0.9949 & 0.000023 & 13/21 & 0.18 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & NRMSE & 0.1443 & 0.1454 & -0.000732 & 14/21 & 1 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & SUVmax bias (\%), all lesions, patient median & -11.1 & -12.3 & 1.00 & 12/21 & 0.25 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & SUVmax bias (\%), $<$1 mL, patient median & -19.2 & -20.9 & 1.60 & 16/20 & 0.017 \\
+p5\_unet\_ctfm\_native\_k4 & p5\_unet\_ctfm\_k4 & 1/1 & consistency & SUVmax bias (\%), bladder $<$2 cm, patient median & -6.0 & -6.2 & 0.27 & 5/16 & 1 \\
+\bottomrule
+\end{tabular}

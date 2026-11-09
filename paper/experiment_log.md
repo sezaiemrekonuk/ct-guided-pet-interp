@@ -876,3 +876,46 @@ with random weights since nothing was downloaded. Nothing has run on real data y
 01_preprocess cells 5 and 6 to build data/ct_native/v1, then checking its alignment numbers and size
 in the manifest, then only the two k = 4 runs in 03_train, z-resolved first. At several A100-hours
 per run I want to see k = 4 beat the no-CT U-Net before spending on k = 3 and k = 2.
+
+## 2026-11-09 — Native-resolution CT for CT-FM at k = 4: no global gain over the 4 mm CT
+
+I built data/ct_native/v1 on a High-RAM CPU runtime first: all 100 patients, 12.87 GB, no
+exclusions. The alignment check against the CT on the PET grid came out at a median MAE of 17.6 HU
+per patient (worst 29.8 HU, train_0030), which is what resampling a fine grid onto a coarse one costs
+at bone and air edges, not a shift. Then I ran the two k = 4 configs back to back on one A100 at
+sha 5b953b48 on a clean tree. Caching the native slabs took 45 minutes, and an epoch took about
+6.8 minutes for the z-resolved run and 7.2 for the z-mean one, against well under a minute for p5.
+That is about 6 GPU-hours per run, less than the subagent's worst case but still eight times p5.
+
+One thing went wrong in between. The browser tab lost its link to the runtime overnight, the
+training itself carried on, but archive_notebook needs a live tab, so the loop died after the first
+run's evaluation and the second run never started. Re-running the loop cell fixed it: the first run
+resumed at epoch 50/50, re-read its per-patient files and archived, and the second started.
+
+Both runs used the best-validation checkpoint (z-resolved epoch 34, val 0.0068 against 0.0071 for
+p5_unet_ctfmz_k4). On the 21 test patients with measurement consistency:
+
+The z-resolved native run, p5_unet_ctfmz_native_k4, came out at 47.66 dB, *worse* than its 4 mm
+twin (48.16 dB; 6/21 patients better, p = 0.0098 for PSNR, p = 0.015 for NRMSE) and no different
+from the no-CT U-Net (47.91 dB over three seeds; 8/21, p = 0.61). Its lesion peaks are less
+flattened than the twin's (patient-median SUVmax bias −8.0 % vs −11.6 %, 14/21, p = 0.019), so it
+traded global accuracy for peaks. The lower validation loss fits that: the loss weights lesion
+voxels five to ten times, so it rewards peaks more than PSNR does.
+
+The z-mean native run, p5_unet_ctfm_native_k4, reached 48.13 dB and beat the no-CT U-Net (17/21
+patients, p = 0.038; SSIM 17/21, p = 0.011; NRMSE p = 0.019) and the raw-CT U-Net (18/21,
+p = 0.0074). Against its own 4 mm twin, though, it is a tie on every global metric (14/21, p = 1),
+and the one place it helps is small lesions: SUVmax bias under 1 mL went from −20.9 % to −19.2 %
+(16/20, p = 0.017).
+
+So at k = 4 the answer to "does CT-FM want its native resolution?" is no for the image as a whole.
+Both native runs land where the 4 mm runs already were (48.13 vs 48.08 z-mean; 47.66 vs 48.16
+z-resolved), at sixteen times the CT-FM compute. What native CT does buy is a small, consistent
+push on lesion peaks in both variants. All of this is one seed against three for the no-CT arm,
+and the gaps to the 4 mm runs are inside the seed-to-seed spread of the p4 U-Net (47.79 to 48.01 dB).
+
+The rule I set was to run k = 3 and k = 2 only if k = 4 beat the no-CT U-Net. The z-mean native run
+technically clears that bar, but so did the 4 mm z-resolved run, and native resolution added nothing
+over its own twin. So I'm holding k = 3 and k = 2 rather than spending another twelve-plus A100-hours
+on them, unless we decide the small-lesion gain is worth chasing. Tables: main_p5n_k4,
+stats_ctfmn_vs_{noct,ct,ctfm}_k4 and stats_ctfmzn_vs_{noct,ct,ctfmz}_k4.

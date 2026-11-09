@@ -1,0 +1,7 @@
+a,b,seeds,variant,metric,mean a,mean b,median a-b,a better,p (Bonferroni)
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,raw,PSNR (dB),47.93,47.61,0.3155,18/21,0.0056
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,raw,SSIM,0.9950,0.9949,0.000053,17/21,0.019
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,raw,NRMSE,0.1475,0.1553,-0.004482,18/21,0.0048
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,consistency,PSNR (dB),48.13,47.82,0.3328,18/21,0.0074
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,consistency,SSIM,0.9950,0.9949,0.000074,17/21,0.021
+p5_unet_ctfm_native_k4,p4_unet_k4,1/3,consistency,NRMSE,0.1443,0.1513,-0.004596,18/21,0.0098
