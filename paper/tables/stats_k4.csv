@@ -2,6 +2,12 @@ a,b,seeds,variant,metric,mean a,mean b,median a-b,a better,p (Bonferroni)
 p4_unet_noct_k4,p4_unet_k4,3/3,raw,PSNR (dB),47.65,47.61,-0.0077,10/21,1
 p4_unet_noct_k4,p4_unet_k4,3/3,raw,SSIM,0.9949,0.9949,0.000026,16/21,0.44
 p4_unet_noct_k4,p4_unet_k4,3/3,raw,NRMSE,0.1534,0.1553,0.000146,10/21,1
+p4_unet_noct_k4,p4_unet_k4,3/3,raw,"SUVmax bias (%), all lesions, patient median",-10.2,-12.6,1.49,19/21,0.0098
+p4_unet_noct_k4,p4_unet_k4,3/3,raw,"SUVmax bias (%), <1 mL, patient median",-20.0,-22.0,1.58,14/20,0.022
+p4_unet_noct_k4,p4_unet_k4,3/3,raw,"SUVmax bias (%), bladder <2 cm, patient median",-1.8,-4.7,1.31,9/16,0.43
 p4_unet_noct_k4,p4_unet_k4,3/3,consistency,PSNR (dB),47.91,47.82,0.0115,11/21,1
 p4_unet_noct_k4,p4_unet_k4,3/3,consistency,SSIM,0.9949,0.9949,0.000021,14/21,0.73
 p4_unet_noct_k4,p4_unet_k4,3/3,consistency,NRMSE,0.1485,0.1513,-0.000110,11/21,1
+p4_unet_noct_k4,p4_unet_k4,3/3,consistency,"SUVmax bias (%), all lesions, patient median",-11.2,-13.2,0.98,15/21,0.0056
+p4_unet_noct_k4,p4_unet_k4,3/3,consistency,"SUVmax bias (%), <1 mL, patient median",-20.4,-22.0,1.54,12/20,0.028
+p4_unet_noct_k4,p4_unet_k4,3/3,consistency,"SUVmax bias (%), bladder <2 cm, patient median",-3.2,-5.8,0.74,7/16,0.82

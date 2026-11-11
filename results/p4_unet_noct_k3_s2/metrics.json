@@ -87,6 +87,68 @@
           "median": -0.010769452899694443
         }
       }
+    },
+    "lesions_by_patient": {
+      "all": {
+        "suvmax_bias": {
+          "n": 21,
+          "mean": -0.04699226072157866,
+          "sd": 0.052498276967976244,
+          "median": -0.030798429623246193
+        },
+        "suvmax_abs_bias": {
+          "n": 21,
+          "mean": 0.0950708096137359,
+          "sd": 0.04465331426108343,
+          "median": 0.08735422790050507
+        },
+        "suvmean_bias": {
+          "n": 21,
+          "mean": -0.036755659927924476,
+          "sd": 0.04160904117641271,
+          "median": -0.02343437448143959
+        }
+      },
+      "small_lt_1ml": {
+        "suvmax_bias": {
+          "n": 20,
+          "mean": -0.1091619041224476,
+          "sd": 0.06957383259065769,
+          "median": -0.09965560957789421
+        },
+        "suvmax_abs_bias": {
+          "n": 20,
+          "mean": 0.12187763223191724,
+          "sd": 0.0634765296290157,
+          "median": 0.11012429930269718
+        },
+        "suvmean_bias": {
+          "n": 20,
+          "mean": -0.10775321369947051,
+          "sd": 0.06861590908027865,
+          "median": -0.09640897810459137
+        }
+      },
+      "bladder_adjacent_lt_2cm": {
+        "suvmax_bias": {
+          "n": 16,
+          "mean": -0.013662493714946322,
+          "sd": 0.10523981030835172,
+          "median": -0.030396071262657642
+        },
+        "suvmax_abs_bias": {
+          "n": 16,
+          "mean": 0.1041470408817986,
+          "sd": 0.08215168845386649,
+          "median": 0.07573515549302101
+        },
+        "suvmean_bias": {
+          "n": 16,
+          "mean": -0.029515059417462908,
+          "sd": 0.0460207563924115,
+          "median": -0.015781521797180176
+        }
+      }
     }
   },
   "consistency": {
@@ -172,6 +234,68 @@
           "median": -0.015891315415501595
         }
       }
+    },
+    "lesions_by_patient": {
+      "all": {
+        "suvmax_bias": {
+          "n": 21,
+          "mean": -0.061511523680694936,
+          "sd": 0.05354001434213564,
+          "median": -0.05229654163122177
+        },
+        "suvmax_abs_bias": {
+          "n": 21,
+          "mean": 0.09547692876575249,
+          "sd": 0.04436789216002974,
+          "median": 0.08884049952030182
+        },
+        "suvmean_bias": {
+          "n": 21,
+          "mean": -0.04233143679344461,
+          "sd": 0.042681406142842486,
+          "median": -0.02938232757151127
+        }
+      },
+      "small_lt_1ml": {
+        "suvmax_bias": {
+          "n": 20,
+          "mean": -0.11789891823427752,
+          "sd": 0.0704611596735157,
+          "median": -0.11498921364545822
+        },
+        "suvmax_abs_bias": {
+          "n": 20,
+          "mean": 0.12762087306473405,
+          "sd": 0.06580469499460512,
+          "median": 0.12210170365869999
+        },
+        "suvmean_bias": {
+          "n": 20,
+          "mean": -0.11253783290630963,
+          "sd": 0.06825607237219512,
+          "median": -0.1007212046533823
+        }
+      },
+      "bladder_adjacent_lt_2cm": {
+        "suvmax_bias": {
+          "n": 16,
+          "mean": -0.016878546703082975,
+          "sd": 0.09753554408224527,
+          "median": -0.03755225753411651
+        },
+        "suvmax_abs_bias": {
+          "n": 16,
+          "mean": 0.09662984215538017,
+          "sd": 0.06814246603365773,
+          "median": 0.07419699523597956
+        },
+        "suvmean_bias": {
+          "n": 16,
+          "mean": -0.03146230611309875,
+          "sd": 0.04486591603392891,
+          "median": -0.01833334716502577
+        }
+      }
     }
   },
   "per_patient": {
@@ -179,252 +303,1092 @@
       "raw": {
         "psnr": 54.55601501464844,
         "ssim": 0.9996146200994005,
-        "nrmse": 0.1589459627866745
+        "nrmse": 0.1589459627866745,
+        "lesions": {
+          "all": {
+            "n": 126,
+            "suvmax_bias": -0.07013789564371109,
+            "suvmax_abs_bias": 0.10808329656720161,
+            "suvmean_bias": -0.025290710851550102
+          },
+          "small_lt_1ml": {
+            "n": 59,
+            "suvmax_bias": -0.16163982450962067,
+            "suvmax_abs_bias": 0.16163982450962067,
+            "suvmean_bias": -0.13379701972007751
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.04936062707565725,
+            "suvmax_abs_bias": 0.04936062707565725,
+            "suvmean_bias": -0.02423995453864336
+          }
+        }
       },
       "consistency": {
         "psnr": 55.24348449707031,
         "ssim": 0.9996443198864866,
-        "nrmse": 0.14685091376304626
+        "nrmse": 0.14685091376304626,
+        "lesions": {
+          "all": {
+            "n": 126,
+            "suvmax_bias": -0.09951496124267578,
+            "suvmax_abs_bias": 0.11412214860320091,
+            "suvmean_bias": -0.041811056435108185
+          },
+          "small_lt_1ml": {
+            "n": 59,
+            "suvmax_bias": -0.173268660902977,
+            "suvmax_abs_bias": 0.173268660902977,
+            "suvmean_bias": -0.13851723074913025
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.05989003228023648,
+            "suvmax_abs_bias": 0.05989003228023648,
+            "suvmean_bias": -0.03677050210535526
+          }
+        }
       }
     },
     "train_0008": {
       "raw": {
         "psnr": 53.55670166015625,
         "ssim": 0.9986465681584082,
-        "nrmse": 0.0784306675195694
+        "nrmse": 0.0784306675195694,
+        "lesions": {
+          "all": {
+            "n": 73,
+            "suvmax_bias": 0.0038405058439821005,
+            "suvmax_abs_bias": 0.08735422790050507,
+            "suvmean_bias": -0.01118458341807127
+          },
+          "small_lt_1ml": {
+            "n": 25,
+            "suvmax_bias": -0.07119683921337128,
+            "suvmax_abs_bias": 0.09389930963516235,
+            "suvmean_bias": -0.08812987059354782
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": 0.22272195667028427,
+            "suvmax_abs_bias": 0.22272195667028427,
+            "suvmean_bias": 0.0324721944052726
+          }
+        }
       },
       "consistency": {
         "psnr": 53.64067077636719,
         "ssim": 0.9986587824548141,
-        "nrmse": 0.07767606526613235
+        "nrmse": 0.07767606526613235,
+        "lesions": {
+          "all": {
+            "n": 73,
+            "suvmax_bias": -0.007026433479040861,
+            "suvmax_abs_bias": 0.08884049952030182,
+            "suvmean_bias": -0.015901345759630203
+          },
+          "small_lt_1ml": {
+            "n": 25,
+            "suvmax_bias": -0.07979728281497955,
+            "suvmax_abs_bias": 0.10364149510860443,
+            "suvmean_bias": -0.09377948194742203
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": 0.1745760813355446,
+            "suvmax_abs_bias": 0.1745760813355446,
+            "suvmean_bias": 0.011904931161552668
+          }
+        }
       }
     },
     "train_0011": {
       "raw": {
         "psnr": 53.576358795166016,
         "ssim": 0.9989032080270406,
-        "nrmse": 0.062399666756391525
+        "nrmse": 0.062399666756391525,
+        "lesions": {
+          "all": {
+            "n": 8,
+            "suvmax_bias": -0.008432660019025207,
+            "suvmax_abs_bias": 0.03371275868266821,
+            "suvmean_bias": -0.00689912773668766
+          },
+          "small_lt_1ml": {
+            "n": 2,
+            "suvmax_bias": -0.18902828474529088,
+            "suvmax_abs_bias": 0.18902828474529088,
+            "suvmean_bias": -0.19715493451803923
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": -0.0977817252278328,
+            "suvmax_abs_bias": 0.0977817252278328,
+            "suvmean_bias": -0.04921291023492813
+          }
+        }
       },
       "consistency": {
         "psnr": 53.89037322998047,
         "ssim": 0.998918054120981,
-        "nrmse": 0.06018410623073578
+        "nrmse": 0.06018410623073578,
+        "lesions": {
+          "all": {
+            "n": 8,
+            "suvmax_bias": -0.008671245072036982,
+            "suvmax_abs_bias": 0.03036089614033699,
+            "suvmean_bias": -0.005095515865832567
+          },
+          "small_lt_1ml": {
+            "n": 2,
+            "suvmax_bias": -0.19892424624413252,
+            "suvmax_abs_bias": 0.19892424624413252,
+            "suvmean_bias": -0.2053046366199851
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": -0.06395089626312256,
+            "suvmax_abs_bias": 0.06395089626312256,
+            "suvmean_bias": -0.02942727506160736
+          }
+        }
       }
     },
     "train_0012": {
       "raw": {
         "psnr": 47.76726531982422,
         "ssim": 0.9955114315083716,
-        "nrmse": 0.09492623060941696
+        "nrmse": 0.09492623060941696,
+        "lesions": {
+          "all": {
+            "n": 137,
+            "suvmax_bias": -0.039174582809209824,
+            "suvmax_abs_bias": 0.07587135583162308,
+            "suvmean_bias": -0.02343437448143959
+          },
+          "small_lt_1ml": {
+            "n": 56,
+            "suvmax_bias": -0.09519222751259804,
+            "suvmax_abs_bias": 0.10346665978431702,
+            "suvmean_bias": -0.09105605259537697
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": 0.025678424164652824,
+            "suvmax_abs_bias": 0.025678424164652824,
+            "suvmean_bias": -0.008131956681609154
+          }
+        }
       },
       "consistency": {
         "psnr": 47.81940460205078,
         "ssim": 0.9955319271476845,
-        "nrmse": 0.0943581834435463
+        "nrmse": 0.0943581834435463,
+        "lesions": {
+          "all": {
+            "n": 137,
+            "suvmax_bias": -0.05077509209513664,
+            "suvmax_abs_bias": 0.07255758345127106,
+            "suvmean_bias": -0.02938232757151127
+          },
+          "small_lt_1ml": {
+            "n": 56,
+            "suvmax_bias": -0.10317514836788177,
+            "suvmax_abs_bias": 0.10961123928427696,
+            "suvmean_bias": -0.10164235904812813
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": 0.020793575793504715,
+            "suvmax_abs_bias": 0.020793575793504715,
+            "suvmean_bias": -0.01043024193495512
+          }
+        }
       }
     },
     "train_0013": {
       "raw": {
         "psnr": 53.26869583129883,
         "ssim": 0.9986585977172,
-        "nrmse": 0.12328710407018661
+        "nrmse": 0.12328710407018661,
+        "lesions": {
+          "all": {
+            "n": 7,
+            "suvmax_bias": -0.13822509348392487,
+            "suvmax_abs_bias": 0.13822509348392487,
+            "suvmean_bias": -0.03816060349345207
+          },
+          "small_lt_1ml": {
+            "n": 3,
+            "suvmax_bias": -0.13822509348392487,
+            "suvmax_abs_bias": 0.13822509348392487,
+            "suvmean_bias": -0.08846283704042435
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": -0.22381551563739777,
+            "suvmax_abs_bias": 0.22381551563739777,
+            "suvmean_bias": -0.046799320727586746
+          }
+        }
       },
       "consistency": {
         "psnr": 53.56801986694336,
         "ssim": 0.9986808816597501,
-        "nrmse": 0.1191108375787735
+        "nrmse": 0.1191108375787735,
+        "lesions": {
+          "all": {
+            "n": 7,
+            "suvmax_bias": -0.1387234926223755,
+            "suvmax_abs_bias": 0.1387234926223755,
+            "suvmean_bias": -0.028291651979088783
+          },
+          "small_lt_1ml": {
+            "n": 3,
+            "suvmax_bias": -0.1387234926223755,
+            "suvmax_abs_bias": 0.1387234926223755,
+            "suvmean_bias": -0.08243541419506073
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": -0.18766914308071136,
+            "suvmax_abs_bias": 0.18766914308071136,
+            "suvmean_bias": -0.015891315415501595
+          }
+        }
       }
     },
     "train_0027": {
       "raw": {
         "psnr": 63.02249526977539,
         "ssim": 0.9998928305368975,
-        "nrmse": 0.019631793722510338
+        "nrmse": 0.019631793722510338,
+        "lesions": {
+          "all": {
+            "n": 52,
+            "suvmax_bias": -0.002976043673697859,
+            "suvmax_abs_bias": 0.011954165995121002,
+            "suvmean_bias": 0.0006364979781210423
+          },
+          "small_lt_1ml": {
+            "n": 18,
+            "suvmax_bias": 0.0006039788713678718,
+            "suvmax_abs_bias": 0.013940067496150732,
+            "suvmean_bias": 0.0011359607888152823
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.04227656126022339,
+            "suvmax_abs_bias": 0.04227656126022339,
+            "suvmean_bias": -0.01973439857829362
+          }
+        }
       },
       "consistency": {
         "psnr": 63.690208435058594,
         "ssim": 0.99989848911131,
-        "nrmse": 0.01817915216088295
+        "nrmse": 0.01817915216088295,
+        "lesions": {
+          "all": {
+            "n": 52,
+            "suvmax_bias": -1.72383151948452e-05,
+            "suvmax_abs_bias": 0.013134647626429796,
+            "suvmean_bias": 6.903107714606449e-05
+          },
+          "small_lt_1ml": {
+            "n": 18,
+            "suvmax_bias": -0.000527556287124753,
+            "suvmax_abs_bias": 0.017028875183314085,
+            "suvmean_bias": -0.0012808809769921936
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.03938897605985403,
+            "suvmax_abs_bias": 0.03938897605985403,
+            "suvmean_bias": -0.020775378914549947
+          }
+        }
       }
     },
     "train_0036": {
       "raw": {
         "psnr": 53.64921951293945,
         "ssim": 0.9985594747850164,
-        "nrmse": 0.07577560096979141
+        "nrmse": 0.07577560096979141,
+        "lesions": {
+          "all": {
+            "n": 44,
+            "suvmax_bias": -0.07812802121043205,
+            "suvmax_abs_bias": 0.08552483841776848,
+            "suvmean_bias": -0.04837973043322563
+          },
+          "small_lt_1ml": {
+            "n": 24,
+            "suvmax_bias": -0.10492652654647827,
+            "suvmax_abs_bias": 0.1113169975578785,
+            "suvmean_bias": -0.11061219498515129
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.08434399217367172,
+            "suvmax_abs_bias": 0.08434399217367172,
+            "suvmean_bias": -0.008575514890253544
+          }
+        }
       },
       "consistency": {
         "psnr": 53.835365295410156,
         "ssim": 0.9985683475951366,
-        "nrmse": 0.07416899502277374
+        "nrmse": 0.07416899502277374,
+        "lesions": {
+          "all": {
+            "n": 44,
+            "suvmax_bias": -0.079631756991148,
+            "suvmax_abs_bias": 0.0901358313858509,
+            "suvmean_bias": -0.051338907331228256
+          },
+          "small_lt_1ml": {
+            "n": 24,
+            "suvmax_bias": -0.1152888797223568,
+            "suvmax_abs_bias": 0.12482127919793129,
+            "suvmean_bias": -0.11308956891298294
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.09716703742742538,
+            "suvmax_abs_bias": 0.09716703742742538,
+            "suvmean_bias": -0.014936687424778938
+          }
+        }
       }
     },
     "train_0041": {
       "raw": {
         "psnr": 41.978267669677734,
         "ssim": 0.9888838496036316,
-        "nrmse": 0.13043926656246185
+        "nrmse": 0.13043926656246185,
+        "lesions": {
+          "all": {
+            "n": 33,
+            "suvmax_bias": -0.12183260172605515,
+            "suvmax_abs_bias": 0.15344516932964325,
+            "suvmean_bias": -0.13166283071041107
+          },
+          "small_lt_1ml": {
+            "n": 28,
+            "suvmax_bias": -0.14426840096712112,
+            "suvmax_abs_bias": 0.14426840096712112,
+            "suvmean_bias": -0.15523754060268402
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       },
       "consistency": {
         "psnr": 42.06020736694336,
         "ssim": 0.9889257397857858,
-        "nrmse": 0.1292145699262619
+        "nrmse": 0.1292145699262619,
+        "lesions": {
+          "all": {
+            "n": 33,
+            "suvmax_bias": -0.12788385152816772,
+            "suvmax_abs_bias": 0.1683223843574524,
+            "suvmean_bias": -0.13999412953853607
+          },
+          "small_lt_1ml": {
+            "n": 28,
+            "suvmax_bias": -0.15865015983581543,
+            "suvmax_abs_bias": 0.15865015983581543,
+            "suvmean_bias": -0.16312245279550552
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       }
     },
     "train_0049": {
       "raw": {
         "psnr": 66.096435546875,
         "ssim": 0.9999578357134187,
-        "nrmse": 0.036910947412252426
+        "nrmse": 0.036910947412252426,
+        "lesions": {
+          "all": {
+            "n": 9,
+            "suvmax_bias": -0.011440238915383816,
+            "suvmax_abs_bias": 0.03408487141132355,
+            "suvmean_bias": 0.006536497734487057
+          },
+          "small_lt_1ml": {
+            "n": 3,
+            "suvmax_bias": -0.011440238915383816,
+            "suvmax_abs_bias": 0.023636924102902412,
+            "suvmean_bias": 0.008408544585108757
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       },
       "consistency": {
         "psnr": 66.58707427978516,
         "ssim": 0.9999602701686136,
-        "nrmse": 0.034883737564086914
+        "nrmse": 0.034883737564086914,
+        "lesions": {
+          "all": {
+            "n": 9,
+            "suvmax_bias": -0.009235176257789135,
+            "suvmax_abs_bias": 0.03895802050828934,
+            "suvmean_bias": 0.0006878470885567367
+          },
+          "small_lt_1ml": {
+            "n": 3,
+            "suvmax_bias": -0.013693071901798248,
+            "suvmax_abs_bias": 0.0200797189027071,
+            "suvmean_bias": 0.007132570259273052
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       }
     },
     "train_0052": {
       "raw": {
         "psnr": 46.91459274291992,
         "ssim": 0.9932239352034341,
-        "nrmse": 0.06731439381837845
+        "nrmse": 0.06731439381837845,
+        "lesions": {
+          "all": {
+            "n": 97,
+            "suvmax_bias": -0.043743524700403214,
+            "suvmax_abs_bias": 0.0631343200802803,
+            "suvmean_bias": -0.029215097427368164
+          },
+          "small_lt_1ml": {
+            "n": 56,
+            "suvmax_bias": -0.05869503319263458,
+            "suvmax_abs_bias": 0.0825432538986206,
+            "suvmean_bias": -0.07393909245729446
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 7,
+            "suvmax_bias": -0.008549238555133343,
+            "suvmax_abs_bias": 0.020457090809941292,
+            "suvmean_bias": -0.013587715104222298
+          }
+        }
       },
       "consistency": {
         "psnr": 46.973819732666016,
         "ssim": 0.9932380760293658,
-        "nrmse": 0.06685693562030792
+        "nrmse": 0.06685693562030792,
+        "lesions": {
+          "all": {
+            "n": 97,
+            "suvmax_bias": -0.05517830699682236,
+            "suvmax_abs_bias": 0.07475084066390991,
+            "suvmean_bias": -0.03771092742681503
+          },
+          "small_lt_1ml": {
+            "n": 56,
+            "suvmax_bias": -0.07504380121827126,
+            "suvmax_abs_bias": 0.09208469465374947,
+            "suvmean_bias": -0.08670848980545998
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 7,
+            "suvmax_bias": -0.00145203887950629,
+            "suvmax_abs_bias": 0.010503364726901054,
+            "suvmean_bias": -0.025486912578344345
+          }
+        }
       }
     },
     "train_0054": {
       "raw": {
         "psnr": 48.70964813232422,
         "ssim": 0.997747956238374,
-        "nrmse": 0.19908826053142548
+        "nrmse": 0.19908826053142548,
+        "lesions": {
+          "all": {
+            "n": 61,
+            "suvmax_bias": -0.11581249535083771,
+            "suvmax_abs_bias": 0.14713816344738007,
+            "suvmean_bias": -0.08136343955993652
+          },
+          "small_lt_1ml": {
+            "n": 25,
+            "suvmax_bias": -0.15502645075321198,
+            "suvmax_abs_bias": 0.17102570831775665,
+            "suvmean_bias": -0.18476423621177673
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": 0.11960537731647491,
+            "suvmax_abs_bias": 0.11960537731647491,
+            "suvmean_bias": 0.00685450155287981
+          }
+        }
       },
       "consistency": {
         "psnr": 49.67216873168945,
         "ssim": 0.9977755336489872,
-        "nrmse": 0.17820505797863007
+        "nrmse": 0.17820505797863007,
+        "lesions": {
+          "all": {
+            "n": 61,
+            "suvmax_bias": -0.13391007483005524,
+            "suvmax_abs_bias": 0.156148761510849,
+            "suvmean_bias": -0.08814415335655212
+          },
+          "small_lt_1ml": {
+            "n": 25,
+            "suvmax_bias": -0.16091781854629517,
+            "suvmax_abs_bias": 0.17022605240345,
+            "suvmean_bias": -0.18548694252967834
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 1,
+            "suvmax_bias": 0.08205412328243256,
+            "suvmax_abs_bias": 0.08205412328243256,
+            "suvmean_bias": -0.026559220626950264
+          }
+        }
       }
     },
     "train_0057": {
       "raw": {
         "psnr": 47.13600540161133,
         "ssim": 0.996637015961173,
-        "nrmse": 0.11407972127199173
+        "nrmse": 0.11407972127199173,
+        "lesions": {
+          "all": {
+            "n": 103,
+            "suvmax_bias": -0.02449265494942665,
+            "suvmax_abs_bias": 0.08092079311609268,
+            "suvmean_bias": -0.021431179717183113
+          },
+          "small_lt_1ml": {
+            "n": 51,
+            "suvmax_bias": -0.05018633231520653,
+            "suvmax_abs_bias": 0.07419952005147934,
+            "suvmean_bias": -0.06854746490716934
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.018515581265091896,
+            "suvmax_abs_bias": 0.018515581265091896,
+            "suvmean_bias": -0.017975328490138054
+          }
+        }
       },
       "consistency": {
         "psnr": 47.20329666137695,
         "ssim": 0.9966638925405052,
-        "nrmse": 0.11319945752620697
+        "nrmse": 0.11319945752620697,
+        "lesions": {
+          "all": {
+            "n": 103,
+            "suvmax_bias": -0.03557944670319557,
+            "suvmax_abs_bias": 0.06471055746078491,
+            "suvmean_bias": -0.028889501467347145
+          },
+          "small_lt_1ml": {
+            "n": 51,
+            "suvmax_bias": -0.06024914234876633,
+            "suvmax_abs_bias": 0.072470523416996,
+            "suvmean_bias": -0.0702887773513794
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.023141629993915558,
+            "suvmax_abs_bias": 0.023141629993915558,
+            "suvmean_bias": -0.009365622885525227
+          }
+        }
       }
     },
     "train_0058": {
       "raw": {
         "psnr": 54.106536865234375,
         "ssim": 0.9992536099378914,
-        "nrmse": 0.0775965005159378
+        "nrmse": 0.0775965005159378,
+        "lesions": {
+          "all": {
+            "n": 23,
+            "suvmax_bias": -0.030597953125834465,
+            "suvmax_abs_bias": 0.10134955495595932,
+            "suvmean_bias": -0.01462830975651741
+          },
+          "small_lt_1ml": {
+            "n": 14,
+            "suvmax_bias": -0.09424426406621933,
+            "suvmax_abs_bias": 0.13542865961790085,
+            "suvmean_bias": -0.05631616711616516
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       },
       "consistency": {
         "psnr": 54.46476364135742,
         "ssim": 0.9992632246030932,
-        "nrmse": 0.07446138560771942
+        "nrmse": 0.07446138560771942,
+        "lesions": {
+          "all": {
+            "n": 23,
+            "suvmax_bias": -0.039007943123579025,
+            "suvmax_abs_bias": 0.10253298282623291,
+            "suvmean_bias": -0.03059910051524639
+          },
+          "small_lt_1ml": {
+            "n": 14,
+            "suvmax_bias": -0.11982763558626175,
+            "suvmax_abs_bias": 0.15766778588294983,
+            "suvmean_bias": -0.07265260070562363
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       }
     },
     "train_0062": {
       "raw": {
         "psnr": 51.54931640625,
         "ssim": 0.9978591698211112,
-        "nrmse": 0.09841302782297134
+        "nrmse": 0.09841302782297134,
+        "lesions": {
+          "all": {
+            "n": 122,
+            "suvmax_bias": 0.032343922182917595,
+            "suvmax_abs_bias": 0.07913055643439293,
+            "suvmean_bias": -0.020730323158204556
+          },
+          "small_lt_1ml": {
+            "n": 53,
+            "suvmax_bias": -0.036724887788295746,
+            "suvmax_abs_bias": 0.058773402124643326,
+            "suvmean_bias": -0.045911360532045364
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": 0.10057275788858533,
+            "suvmax_abs_bias": 0.113569728564471,
+            "suvmean_bias": -0.0516157066449523
+          }
+        }
       },
       "consistency": {
         "psnr": 51.78596115112305,
         "ssim": 0.9979033850015503,
-        "nrmse": 0.0957680270075798
+        "nrmse": 0.0957680270075798,
+        "lesions": {
+          "all": {
+            "n": 122,
+            "suvmax_bias": 0.019542467780411243,
+            "suvmax_abs_bias": 0.0722009725868702,
+            "suvmean_bias": -0.02102012187242508
+          },
+          "small_lt_1ml": {
+            "n": 53,
+            "suvmax_bias": -0.03676122799515724,
+            "suvmax_abs_bias": 0.06199682503938675,
+            "suvmean_bias": -0.0515800379216671
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": 0.16287549957633018,
+            "suvmax_abs_bias": 0.16287549957633018,
+            "suvmean_bias": -0.04205754189752042
+          }
+        }
       }
     },
     "train_0074": {
       "raw": {
         "psnr": 44.17185974121094,
         "ssim": 0.9946766622490897,
-        "nrmse": 0.2309073656797409
+        "nrmse": 0.2309073656797409,
+        "lesions": {
+          "all": {
+            "n": 198,
+            "suvmax_bias": -0.15123812854290009,
+            "suvmax_abs_bias": 0.19310563057661057,
+            "suvmean_bias": -0.142764113843441
+          },
+          "small_lt_1ml": {
+            "n": 94,
+            "suvmax_bias": -0.29268263280391693,
+            "suvmax_abs_bias": 0.29268263280391693,
+            "suvmean_bias": -0.2907814383506775
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.0011881436221301556,
+            "suvmax_abs_bias": 0.2840788662433624,
+            "suvmean_bias": -0.1422574371099472
+          }
+        }
       },
       "consistency": {
         "psnr": 44.45360565185547,
         "ssim": 0.9947329632359154,
-        "nrmse": 0.22353757917881012
+        "nrmse": 0.22353757917881012,
+        "lesions": {
+          "all": {
+            "n": 198,
+            "suvmax_bias": -0.17483003437519073,
+            "suvmax_abs_bias": 0.19149021059274673,
+            "suvmean_bias": -0.15138646960258484
+          },
+          "small_lt_1ml": {
+            "n": 94,
+            "suvmax_bias": -0.3001950681209564,
+            "suvmax_abs_bias": 0.3001950681209564,
+            "suvmean_bias": -0.2943460941314697
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.03571553900837898,
+            "suvmax_abs_bias": 0.22751367092132568,
+            "suvmean_bias": -0.16009844839572906
+          }
+        }
       }
     },
     "train_0076": {
       "raw": {
         "psnr": 55.73658752441406,
         "ssim": 0.9995479871529274,
-        "nrmse": 0.11542249470949173
+        "nrmse": 0.11542249470949173,
+        "lesions": {
+          "all": {
+            "n": 7,
+            "suvmax_bias": 0.012139013037085533,
+            "suvmax_abs_bias": 0.0671263188123703,
+            "suvmean_bias": 0.003774769837036729
+          },
+          "small_lt_1ml": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.0671263188123703,
+            "suvmax_abs_bias": 0.0671263188123703,
+            "suvmean_bias": -0.0055742585100233555
+          }
+        }
       },
       "consistency": {
         "psnr": 56.111698150634766,
         "ssim": 0.999553381190822,
-        "nrmse": 0.11054428666830063
+        "nrmse": 0.11054428666830063,
+        "lesions": {
+          "all": {
+            "n": 7,
+            "suvmax_bias": -0.05229654163122177,
+            "suvmax_abs_bias": 0.08106377720832825,
+            "suvmean_bias": -0.0051507423631846905
+          },
+          "small_lt_1ml": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": -0.08955755829811096,
+            "suvmax_abs_bias": 0.08955755829811096,
+            "suvmean_bias": -0.0014135913224890828
+          }
+        }
       }
     },
     "train_0081": {
       "raw": {
         "psnr": 47.5377311706543,
         "ssim": 0.9949177549645063,
-        "nrmse": 0.10387478023767471
+        "nrmse": 0.10387478023767471,
+        "lesions": {
+          "all": {
+            "n": 13,
+            "suvmax_bias": -0.030798429623246193,
+            "suvmax_abs_bias": 0.06412716954946518,
+            "suvmean_bias": -0.036148589104413986
+          },
+          "small_lt_1ml": {
+            "n": 5,
+            "suvmax_bias": -0.08605288714170456,
+            "suvmax_abs_bias": 0.10893160104751587,
+            "suvmean_bias": -0.1069486141204834
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       },
       "consistency": {
         "psnr": 47.63996887207031,
         "ssim": 0.9949596295342611,
-        "nrmse": 0.10265930742025375
+        "nrmse": 0.10265930742025375,
+        "lesions": {
+          "all": {
+            "n": 13,
+            "suvmax_bias": -0.0732349306344986,
+            "suvmax_abs_bias": 0.08536262065172195,
+            "suvmean_bias": -0.04042202606797218
+          },
+          "small_lt_1ml": {
+            "n": 5,
+            "suvmax_bias": -0.09132189303636551,
+            "suvmax_abs_bias": 0.11938212811946869,
+            "suvmean_bias": -0.11287311464548111
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       }
     },
     "train_0082": {
       "raw": {
         "psnr": 49.9205436706543,
         "ssim": 0.9976588650694376,
-        "nrmse": 0.07303246855735779
+        "nrmse": 0.07303246855735779,
+        "lesions": {
+          "all": {
+            "n": 25,
+            "suvmax_bias": -0.017058758065104485,
+            "suvmax_abs_bias": 0.09749358147382736,
+            "suvmean_bias": -0.010409168899059296
+          },
+          "small_lt_1ml": {
+            "n": 6,
+            "suvmax_bias": -0.10411899164319038,
+            "suvmax_abs_bias": 0.10411899164319038,
+            "suvmean_bias": -0.10176190361380577
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.04884949978441,
+            "suvmax_abs_bias": 0.04884949978441,
+            "suvmean_bias": 0.00449550396297127
+          }
+        }
       },
       "consistency": {
         "psnr": 50.03765106201172,
         "ssim": 0.9976777052528538,
-        "nrmse": 0.0720544382929802
+        "nrmse": 0.0720544382929802,
+        "lesions": {
+          "all": {
+            "n": 25,
+            "suvmax_bias": -0.038772422820329666,
+            "suvmax_abs_bias": 0.09841497242450714,
+            "suvmean_bias": -0.016236623749136925
+          },
+          "small_lt_1ml": {
+            "n": 6,
+            "suvmax_bias": -0.11468954756855965,
+            "suvmax_abs_bias": 0.11468954756855965,
+            "suvmean_bias": -0.09980005025863647
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 2,
+            "suvmax_bias": -0.06633986718952656,
+            "suvmax_abs_bias": 0.06633986718952656,
+            "suvmean_bias": -0.002694767783395946
+          }
+        }
       }
     },
     "train_0086": {
       "raw": {
         "psnr": 47.55896759033203,
         "ssim": 0.9985038678676251,
-        "nrmse": 0.09309250116348267
+        "nrmse": 0.09309250116348267,
+        "lesions": {
+          "all": {
+            "n": 63,
+            "suvmax_bias": 0.003992759622633457,
+            "suvmax_abs_bias": 0.09591233730316162,
+            "suvmean_bias": -0.0003114731516689062
+          },
+          "small_lt_1ml": {
+            "n": 13,
+            "suvmax_bias": -0.055412765592336655,
+            "suvmax_abs_bias": 0.08227554708719254,
+            "suvmean_bias": -0.08095087110996246
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": 0.06421074271202087,
+            "suvmax_abs_bias": 0.06421074271202087,
+            "suvmean_bias": -0.004269750788807869
+          }
+        }
       },
       "consistency": {
         "psnr": 47.8571891784668,
         "ssim": 0.9985260866864833,
-        "nrmse": 0.08995046466588974
+        "nrmse": 0.08995046466588974,
+        "lesions": {
+          "all": {
+            "n": 63,
+            "suvmax_bias": 0.0008261997136287391,
+            "suvmax_abs_bias": 0.07926513999700546,
+            "suvmean_bias": -0.005826282314956188
+          },
+          "small_lt_1ml": {
+            "n": 13,
+            "suvmax_bias": -0.06897655129432678,
+            "suvmax_abs_bias": 0.06897655129432678,
+            "suvmean_bias": -0.09613896161317825
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 3,
+            "suvmax_bias": 0.06032390892505646,
+            "suvmax_abs_bias": 0.06032390892505646,
+            "suvmean_bias": -0.0019188129808753729
+          }
+        }
       }
     },
     "train_0090": {
       "raw": {
         "psnr": 47.83710479736328,
         "ssim": 0.9952838656467451,
-        "nrmse": 0.12341279536485672
+        "nrmse": 0.12341279536485672,
+        "lesions": {
+          "all": {
+            "n": 235,
+            "suvmax_bias": -0.09419931471347809,
+            "suvmax_abs_bias": 0.13644550740718842,
+            "suvmean_bias": -0.061458807438611984
+          },
+          "small_lt_1ml": {
+            "n": 146,
+            "suvmax_bias": -0.16724689304828644,
+            "suvmax_abs_bias": 0.1806182786822319,
+            "suvmean_bias": -0.14691969752311707
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 11,
+            "suvmax_bias": -0.10958195477724075,
+            "suvmax_abs_bias": 0.18396064639091492,
+            "suvmean_bias": -0.12408889830112457
+          }
+        }
       },
       "consistency": {
         "psnr": 48.04376983642578,
         "ssim": 0.9953371057005949,
-        "nrmse": 0.12051114439964294
+        "nrmse": 0.12051114439964294,
+        "lesions": {
+          "all": {
+            "n": 235,
+            "suvmax_bias": -0.10402286797761917,
+            "suvmax_abs_bias": 0.13149245083332062,
+            "suvmean_bias": -0.06555727124214172
+          },
+          "small_lt_1ml": {
+            "n": 146,
+            "suvmax_bias": -0.16819142550230026,
+            "suvmax_abs_bias": 0.17022336274385452,
+            "suvmean_bias": -0.14589685946702957
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 11,
+            "suvmax_bias": -0.10640721768140793,
+            "suvmax_abs_bias": 0.18033210933208466,
+            "suvmean_bias": -0.11747550964355469
+          }
+        }
       }
     },
     "train_0097": {
       "raw": {
         "psnr": 46.832584381103516,
         "ssim": 0.9958774013737375,
-        "nrmse": 0.09471043944358826
+        "nrmse": 0.09471043944358826,
+        "lesions": {
+          "all": {
+            "n": 72,
+            "suvmax_bias": -0.06086527928709984,
+            "suvmax_abs_bias": 0.1423472911119461,
+            "suvmean_bias": -0.07934416085481644
+          },
+          "small_lt_1ml": {
+            "n": 46,
+            "suvmax_bias": -0.1675334870815277,
+            "suvmax_abs_bias": 0.1675334870815277,
+            "suvmean_bias": -0.14331748336553574
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       },
       "consistency": {
         "psnr": 47.01731872558594,
         "ssim": 0.9959144322355059,
-        "nrmse": 0.09271738678216934
+        "nrmse": 0.09271738678216934,
+        "lesions": {
+          "all": {
+            "n": 72,
+            "suvmax_bias": -0.083798848092556,
+            "suvmax_abs_bias": 0.11242671310901642,
+            "suvmean_bias": -0.08695889636874199
+          },
+          "small_lt_1ml": {
+            "n": 46,
+            "suvmax_bias": -0.17975575476884842,
+            "suvmax_abs_bias": 0.17975575476884842,
+            "suvmean_bias": -0.1429452747106552
+          },
+          "bladder_adjacent_lt_2cm": {
+            "n": 0,
+            "suvmax_bias": null,
+            "suvmax_abs_bias": null,
+            "suvmean_bias": null
+          }
+        }
       }
     }
   }
