@@ -117,7 +117,8 @@ Non-negotiable. Violating one invalidates the experiment, not just the code.
   Same-session PET/CT is already aligned — grid matching only, no deformable registration.
 - **Data splits are patient-level, never slice-level.** Slice-level splitting leaks neighboring
   anatomy into the test set and inflates every metric.
-- **SUV conversion check per patient**: FDG liver SUVmean ≈ 1.5–3.0. Out-of-range FDG means
+- **SUV conversion check per patient**: FDG liver SUVmean 1.3–3.0 (EANM guideline,
+  Boellaard 2015; log 2026-11-18). Out-of-range FDG means
   broken SUV conversion (decay correction, injected dose, weight units) — fix the conversion
   before trusting anything downstream. PSMA liver SUVmean is recorded, never a gate: it falls with
   tumour burden and varies with tracer and uptake time (DEEP-PSMA: 39/100 below 4 with the paired

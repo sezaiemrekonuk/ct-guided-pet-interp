@@ -919,3 +919,20 @@ technically clears that bar, but so did the 4 mm z-resolved run, and native reso
 over its own twin. So I'm holding k = 3 and k = 2 rather than spending another twelve-plus A100-hours
 on them, unless we decide the small-lesion gain is worth chasing. Tables: main_p5n_k4,
 stats_ctfmn_vs_{noct,ct,ctfm}_k4 and stats_ctfmzn_vs_{noct,ct,ctfmz}_k4.
+
+## 2026-11-18 — The FDG liver range had no source, and the source says 1.3, not 1.5
+
+Our advisor asked us to make sure every reference in the TÜBİTAK 2209-A proposal is real, so I
+went through all 44 against Crossref, DataCite, arXiv and PubMed. They all exist and say what we
+cite them for, with one exception. The proposal cites Boellaard et al. (2015), the EANM FDG
+guideline, for "liver SUVmean roughly 1.5–3.0", the same range we wrote into CLAUDE.md in August.
+The guideline actually says mean liver SUV is expected within 1.3 and 3.0 (SUL 1.0–2.2) for
+quantitatively assessed studies. Nobody can say where our 1.5 came from, so I've changed CLAUDE.md
+to 1.3–3.0 and added the guideline to references.bib.
+
+This doesn't move any result. In p1_qc_suv_deep_psma only one FDG liver fell below 1.5, and that's
+train_0067 at 1.26, which is below 1.3 as well. So the crosstab is the same under the corrected
+bound: 96 of 100 FDG livers in range, one below, three above. The liver range is a flag, not an
+exclusion, so no split or derived data depends on it either. I left
+configs/p1_qc_suv_deep_psma.yaml as it was run, with [1.5, 3.0], because it has to match the
+snapshot archived with that run. Any new QC config takes 1.3.

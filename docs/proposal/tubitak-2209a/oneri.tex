@@ -1,0 +1,722 @@
+% TÜBİTAK 2209-A araştırma önerisi. Derleme: tectonic oneri.tex  (veya xelatex oneri.tex)
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[shorthands=off,turkish]{babel}
+\usepackage{amsmath}
+\usepackage{array,booktabs,tabularx,longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage{needspace}
+
+\newcommand{\doi}[1]{DOI: \href{https://doi.org/#1}{\nolinkurl{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\setlength{\parindent}{0pt}
+\setlength{\extrarowheight}{3pt}
+\setlength{\parskip}{0.5\baselineskip}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries TÜBİTAK 2209-A Araştırma Önerisi --- 2026 Yılı Çağrısı\par}
+\end{center}
+
+\textbf{Proje Başlığı:} Kalın Kesitli PSMA PET/BT Görüntülerinde BT Kılavuzlu Derin Öğrenme ile
+Kesitler Arası Çözünürlük Artırımı ve Lezyon Düzeyinde SUV Sadakatinin Korunması
+
+\textbf{Anahtar Kelimeler:} PSMA PET/BT, kesit interpolasyonu, süper çözünürlük, derin öğrenme,
+çapraz dikkat, kısmi hacim etkisi, SUV
+
+\section*{Özet}
+
+Prostata özgü membran antijeni (PSMA) PET/BT, prostat kanserinin evrelemesinde ve PSMA hedefli
+radyoligand tedavisine hasta seçiminde klinik standart hâline gelmiştir (Hofman vd., 2020;
+Fendler vd., 2023; Sartor vd., 2021). PET görüntülerinin eksenel (z) yöndeki kesit aralığı, aynı
+seansta çekilen BT'ye göre belirgin biçimde kabadır; kalın kesitlerde küçük lezyonların aktivitesi
+komşu dokuya yayılır ve kısmi hacim etkisi nedeniyle maksimum standart tutulum değeri (SUVmax)
+olduğundan düşük ölçülür (Soret vd., 2007). Bu projede, seyrek (kalın) PET kesitlerinden ince
+kesitli PET hacmini, aynı seansta elde edilen tam çözünürlüklü BT'nin anatomik ön bilgisi
+kılavuzluğunda yeniden oluşturan bir derin öğrenme yöntemi geliştirilecektir. Problem, kalın
+kesitin ince kesitlerin ortalaması olduğu fiziksel olarak tutarlı bir bozunum modeliyle
+tanımlanacak ve $k = 2$, 3 ve 4 seyrekleştirme faktörlerinin her biri için ayrı ayrı
+çözülecektir. Yöntem, kübik spline taban çizgisinden başlayıp BT'siz ve BT'li 2.5 boyutlu
+rezidüel U-Net'e, önceden eğitilmiş bir BT temel modelinin özniteliklerine ve projenin özgün
+katkısı olan, BT kodlayıcısından PET kod çözücüsüne çapraz dikkat (cross-attention) ile bilgi
+aktaran mimariye uzanan bir model merdiveni olarak kurgulanmıştır. Tüm modellerin çıktısına,
+sentezlenen ince kesitlerin ortalamasını ölçülen kalın kesite eşitleyen ölçüm tutarlılığı
+izdüşümü uygulanacaktır. Literatürdeki SAINT, I$^3$Net, RIFE ve FILM yöntemleri aynı veri
+bölünmesi, aynı bozunum modeli ve aynı metrik koduyla yeniden çalıştırılarak adil bir
+karşılaştırma yapılacaktır. Değerlendirme, vücut maskesi içindeki PSNR, SSIM ve NRMSE'nin
+yanında lezyon düzeyinde SUVmax sapmasını, 1~mL'den küçük lezyonları ve mesaneye komşu
+lezyonları ayrı ayrı kapsayacak; karşılaştırmalar hasta düzeyinde eşleştirilmiş Wilcoxon
+işaretli sıralar testi ve Bonferroni düzeltmesiyle yapılacaktır. Genellenebilirlik farklı bir
+merkezin PSMA verisinde ve aynı hastaların FDG taramalarında sınanacaktır. Ön çalışmada,
+$k = 2$'de öğrenmeli modelin kübik interpolasyonun \%13,2 olan ortalama lezyon SUVmax düşük
+ölçümünü yaklaşık \%2'ye indirdiği, BT'nin girdi kanallarına basitçe eklenmesinin ise fayda
+sağlamadığı görülmüştür; bu bulgu, BT bilgisinin ağa hangi yolla aktarılması gerektiği sorusunu
+projenin merkezine yerleştirmektedir. Proje, üç lisans öğrencisinden oluşan ekip tarafından
+akademik danışman rehberliğinde, 12 ay süren beş iş paketi hâlinde yürütülecektir. Her deney
+sürümlenmiş yapılandırma dosyalarından yeniden üretilebilecek ve kesintiye uğradığında kaldığı
+yerden sürdürülebilecek bir yazılım hattıyla gerçekleştirilecektir. Projenin çıktıları en az bir
+uluslararası bildiri, bir dergi makalesi taslağı ve açık kaynak koddur. Uzun vadede yöntemin, PET
+çekim süresini veya hasta dozunu artırmadan küçük lezyonların daha doğru ölçülmesine katkı
+sağlaması hedeflenmektedir.
+
+\section{Araştırma Önerisinin Bilimsel Niteliği}
+
+\subsection{Konunun Önemi ve Araştırma Önerisinin Bilimsel Niteliği}
+
+\paragraph{Klinik önem.} PSMA PET/BT, yüksek riskli prostat kanserinde konvansiyonel
+görüntülemeye (BT ve kemik sintigrafisi) göre daha yüksek tanısal doğruluk sağladığı için
+evrelemede klinik standart hâline gelmiştir (Hofman vd., 2020); görüntülerin elde edilmesi ve
+yorumlanması uluslararası kılavuzlarla tanımlanmıştır (Fendler vd., 2023). Metastatik
+kastrasyona dirençli prostat kanserinde $^{177}$Lu-PSMA-617 tedavisinin sağkalım yararı
+gösterildikten sonra (Sartor vd., 2021) PSMA PET yalnızca bir tanı aracı değil, tedaviye hasta
+seçimi ve yanıt değerlendirmesi için nicel bir ölçüm aracı da olmuştur. Bu kullanımda karar,
+büyük ölçüde lezyonların standart tutulum değerlerine (SUV) dayanır; dolayısıyla SUV'deki
+sistematik bir düşük ölçüm, doğrudan klinik bir hataya dönüşebilir.
+
+\paragraph{Problem.} PET/BT taramasında BT ince kesitli ve yüksek uzaysal çözünürlüklü elde
+edilirken PET'in eksenel (z) yöndeki örnekleme aralığı daha kabadır. Bu çalışmada kullanılacak
+açık PSMA veri setinde dahi PET'in kesit aralığı hastadan hastaya 1,5~mm ile 5~mm arasında
+değişmektedir. Kalın bir PET kesiti, tarayıcının o kalınlık boyunca topladığı sayımların
+ortalamasıdır; birkaç milimetrelik bir lezyon bu ortalama içinde komşu dokuyla karışır ve kısmi
+hacim etkisi nedeniyle SUVmax değeri gerçek değerinden düşük ölçülür (Soret vd., 2007). Etki en
+çok, klinik açıdan en önemli olan küçük lezyonlarda ortaya çıkar: klinik bir çalışmada 4~mm
+yerine 2~mm vokselle geriçatım yapılması SUVmax değerini ortalama \%32, 0,75~mL'den küçük
+lezyonlarda ise \%44 artırmıştır (Koopman vd., 2015). Daha ince kesitler elde etmek ise ya daha
+uzun çekim ya da daha yüksek doz anlamına gelir. PET görüntü iyileştirme literatürü gürültü
+azaltma ve düzlem içi çözünürlük artırımı üzerinde yoğunlaşmıştır (Liu vd., 2021); derin
+öğrenmeli PET süper çözünürlük çalışmaları SUV doğruluğunu değerlendirmeye yeni yeni başlamış
+(Endo vd., 2025), BT kılavuzunda eksenel yöndeki çözünürlük kaybı ise görece az çalışılmıştır.
+
+\paragraph{Literatürdeki boşluk.} Kesitler arası interpolasyon ve kesit sentezi problemi BT ve
+MR için çalışılmıştır. SAINT, sagital ve koronal düzlemlerde öğrenilen süper çözünürlüğü
+birleştirerek BT kesitleri sentezler (Peng vd., 2020); I$^3$Net, kesit içi ve kesitler arası
+bilgiyi frekans alanında da öğrenerek bu alanda güncel en iyi sonuçları raporlamıştır (Song vd.,
+2024); SMORE ise MR için harici yüksek çözünürlüklü veri gerektirmeyen öz-denetimli bir yaklaşım
+önerir (Zhao vd., 2021). Video kare interpolasyonu yöntemleri RIFE (Huang vd., 2022) ve FILM
+(Reda vd., 2022) de tıbbi kesit interpolasyonunda karşılaştırma yöntemi olarak sıkça
+kullanılmaktadır. PET tarafında ise anatomik kılavuz fikri çoğunlukla beyin PET'inde MR
+kılavuzlu düzlem içi süper çözünürlük olarak ele alınmıştır (Song vd., 2020). BT'den PET sentezi
+üzerine yapılan çalışmalar (Ben-Cohen vd., 2019), BT anatomisinin tutulumun nerede olabileceğine
+dair bilgi taşıdığını, ancak tutulumun şiddetini tek başına belirleyemediğini göstermektedir; bu
+nedenle seyrek ölçülmüş PET ile BT'yi birlikte kullanan bir kurgu, yalnızca BT'den PET üretmeye
+göre klinik olarak çok daha savunulabilirdir. Bilgimiz dâhilinde, aynı seansta elde edilen BT'yi
+kılavuz olarak kullanan PSMA PET kesitler arası interpolasyonu sistematik olarak
+çalışılmamıştır. Ayrıca mevcut kesit interpolasyonu çalışmalarının çoğu düşük çözünürlüklü
+girdiyi kesit atlayarak (decimation) üretmektedir; oysa kalın kesitli PET kesit atlamaya değil,
+kesit ortalamasına karşılık gelir ve bu iki problem fiziksel olarak farklıdır. Son olarak bu
+çalışmaların değerlendirmesi çoğunlukla tüm görüntü üzerinden hesaplanan PSNR ve SSIM ile
+yapılmakta, lezyon düzeyindeki SUV hataları bu ortalamaların içinde görünmez kalmaktadır.
+
+\paragraph{Araştırma sorusu ve hipotezler.} Projenin araştırma sorusu şudur: Aynı seansta
+çekilen tam çözünürlüklü BT, kalın kesitli PSMA PET'ten ince kesitlerin geri kazanılmasında,
+özellikle küçük lezyonların SUVmax değerinin korunmasında, PET'in kendi içeriğinin ötesinde ek
+bilgi sağlar mı; sağlıyorsa bu bilgi ağa hangi yolla aktarılmalıdır? Bu soru üç hipotezle
+sınanacaktır. H1: Öğrenmeli modeller, kübik spline interpolasyonuna göre lezyon SUVmax sapmasını
+ve görüntü hatasını hasta düzeyinde anlamlı olarak azaltır. H2: BT bilgisinin ayrı bir kodlayıcı
+ve çapraz dikkat ile ya da önceden eğitilmiş bir BT temel modelinin öznitelikleriyle aktarılması,
+BT'siz modele göre özellikle yüksek seyrekleştirme faktöründe ($k = 4$) ve küçük lezyonlarda
+iyileşme sağlar; BT'nin girdi kanallarına basitçe eklenmesi (erken füzyon) ise sağlamaz. H3:
+Ölçüm tutarlılığı izdüşümü, sentezlenen hacmin ölçülen veriyle tutarlı olmasını garanti ederek
+global hata metriklerini iyileştirir; lezyon SUVmax üzerindeki etkisi ayrıca ölçülecektir.
+
+\paragraph{Ulusal öncelikler ile ilişkisi.} Proje, TÜBİTAK öncelikli alanlar listesindeki
+``Yapay zekâ'' ve ``Tıbbi cihaz teknolojileri'' alanlarıyla doğrudan ilişkilidir (TÜBİTAK, 2025).
+On İkinci Kalkınma Planı'nda ``yapay zekâ tabanlı sağlık teknolojilerinin geliştirilmesi''
+(madde 441.5), ``tıbbi görüntüleme cihazları alanında kullanılan kritik teknolojiler'' (madde
+449.2), sağlık teknolojilerinin stratejik bir Ar-Ge alanı olarak sürdürülmesi (madde 556) ve
+dijital sağlık teknolojilerinin kullanımının yaygınlaştırılması (madde 715) hedeflenmekte;
+anonimleştirilmiş sağlık verilerinin Ar-Ge amaçlı ikincil kullanımı için altyapı oluşturulması
+öngörülmektedir (madde 716.3) (Strateji ve Bütçe Başkanlığı, 2023). 2030 Sanayi ve Teknoloji
+Stratejisi'nde yapay zekâ ve tıbbi cihaz, öncelikli yüksek teknoloji alanları arasında
+sayılmakta ve yapay zekâ destekli teşhis sistemlerinin radyoloji görüntülerini analiz ederek
+kanser gibi ciddi hastalıkları daha hızlı ve doğru biçimde tespit edebileceği vurgulanmaktadır
+(Sanayi ve Teknoloji Bakanlığı, 2025). Bu proje, tamamen anonimleştirilmiş açık veriyle
+geliştirilen, tıbbi görüntüleme cihazının donanımını değiştirmeden çıktısının nicel doğruluğunu
+yazılım düzeyinde artıran yapay zekâ tabanlı bir sağlık teknolojisi bileşeni ürettiği için bu
+maddelerle örtüşmektedir. Projenin bu alanlara yararı, nükleer tıp görüntülemesinde yerli bir
+yöntem birikimi oluşturması ve yapay zekâ ile tıbbi görüntüleme kesişiminde çalışabilecek
+nitelikli insan kaynağı yetiştirmesidir.
+
+\subsection{Amaç ve Hedefler}
+
+Projenin amacı, kalın kesitli PSMA PET görüntülerinden ince kesitli PET hacmini, aynı seansta elde
+edilen BT'nin anatomik bilgisinden yararlanarak, lezyon düzeyindeki nicel değerleri (SUV)
+koruyacak biçimde yeniden oluşturan, fiziksel olarak tutarlı ve yeniden üretilebilir bir derin
+öğrenme yöntemi geliştirmek ve bu yöntemi literatürdeki yöntemlerle adil koşullarda
+karşılaştırmaktır. Bu amaç doğrultusunda aşağıdaki ölçülebilir hedefler belirlenmiştir.
+
+\paragraph{Hedef 1 --- Tekrarlanabilir veri ve bozunum hattı (İP1).} 100 hastalık açık PSMA
+PET/BT kohortunun SUV dönüşümünün, kalite kontrolünün ve BT'nin PET ızgarasına yeniden
+örneklenmesinin tamamlanması; hasta düzeyinde \%70/\%10/\%20 eğitim/doğrulama/test bölünmesinin
+ve $k = 2$, 3, 4 için test bozunumlarının bir kez üretilip dondurulması. Ölçüt: kohortun tamamı
+için kalite kontrol raporu, dışlanan her hasta için yazılı gerekçe ve dondurulmuş bölünme
+dosyası.
+
+\paragraph{Hedef 2 --- Adil karşılaştırma tablosu (İP1--İP2).} Kübik spline ve dört literatür
+yönteminin (SAINT, I$^3$Net, RIFE, FILM) aynı bölünme, aynı ortalama tabanlı bozunum ve aynı
+metrik koduyla $k = 2$, 3 ve 4'te değerlendirilmesi. Ölçüt: 5 yöntem $\times$ 3 faktörlük
+tablonun eksiksiz doldurulması.
+
+\paragraph{Hedef 3 --- Model merdiveni ve BT katkısının ölçülmesi (İP3).} BT'siz ve BT'li (erken
+füzyon) 2.5B rezidüel U-Net ile BT temel modeli öznitelikli U-Net'in her faktörde en az üç farklı
+rastgele tohumla eğitilmesi. Ölçüt: öğrenmeli modelin kübik interpolasyona göre test hastalarının
+çoğunluğunda daha iyi olması ve farkın Bonferroni düzeltmesi sonrası $p < 0{,}05$ düzeyinde
+anlamlı olması (H1); BT'li ve BT'siz modeller arasındaki farkın hasta düzeyinde test edilmesi
+(H2'nin ilk ayağı).
+
+\paragraph{Hedef 4 --- Özgün çapraz dikkat modeli (İP4).} BT'yi ayrı bir kodlayıcıdan çapraz
+dikkat ile PET kod çözücüsüne aktaran modelin geliştirilmesi ve ablasyonlarla incelenmesi.
+Ölçüt: $k = 4$'te BT'siz U-Net'e karşı hasta düzeyinde eşleştirilmiş testte PSNR'de anlamlı
+üstünlük (H2) ve 1~mL'den küçük lezyonlarda SUVmax düşük ölçümünün kübik interpolasyona göre en
+az \%40 azaltılması (ön çalışmada kübik interpolasyonun $k = 4$'teki düşük ölçümü \%37,6'dır).
+
+\paragraph{Hedef 5 --- Genellenebilirlik ve klinik görev (İP5).} Modellerin farklı bir merkezden
+gelen PSMA verisinde (dış test) ve aynı hastaların FDG taramalarında (tracer değişimi)
+değerlendirilmesi; ayrıca hazır bir lezyon segmentasyon modelinin gerçek ve sentezlenmiş PET
+üzerindeki başarısının karşılaştırılması. Ölçüt: dış test kümesindeki performans düşüşünün ve
+segmentasyon Dice farkının raporlanması.
+
+\paragraph{Hedef 6 --- Paylaşım.} Kodun ve deney yapılandırmalarının açık kaynak olarak
+yayımlanması; en az bir uluslararası bildiri ve bir dergi makalesi taslağının hazırlanması.
+
+\section{Yöntem}
+
+\subsection{Araştırma tasarımı}
+Çalışma, açık erişimli ve anonimleştirilmiş görüntüler üzerinde yürütülecek retrospektif,
+hesaplamalı ve deneysel bir çalışmadır. Bağımsız değişkenler model türü (model merdiveninin
+basamağı), BT'nin kullanılıp kullanılmadığı ve kullanılıyorsa aktarım biçimi (erken füzyon, temel
+model öznitelikleri, çapraz dikkat), seyrekleştirme faktörü $k \in \{2, 3, 4\}$, ölçüm
+tutarlılığı izdüşümünün uygulanıp uygulanmadığı ve rastgele tohumdur. Bağımlı değişkenler vücut
+maskesi içinde hesaplanan PSNR, SSIM ve NRMSE; lezyon düzeyinde SUVmax ve SUVmean sapması; alt
+gruplarda (1~mL'den küçük lezyonlar, mesaneye 2~cm'den yakın lezyonlar) SUVmax sapması ve klinik
+görev değerlendirmesinde segmentasyon Dice skorudur. Her model her faktörde hem ham çıktısıyla hem
+ölçüm tutarlılığı sonrası çıktısıyla raporlanacağından, tutarlılık ablasyonu her deneyle birlikte
+elde edilecektir.
+
+\subsection{Veri (İP1)}
+Ana eğitim ve geliştirme kümesi, metastatik kastrasyona dirençli prostat kanseri hastalarına ait,
+lezyon kontürleri (toplam tümör yükü, TTB) bulunan ve her hastada hem PSMA hem FDG PET/BT içeren
+DEEP-PSMA veri setidir (100 hasta; Jackson vd., 2025); lezyon kontürleri Ferdinandus vd. (2020) ve
+Buteau vd. (2022) tarafından tanımlanan yöntemle oluşturulmuştur. Dış test için farklı bir
+merkezde çekilmiş, elle işaretlenmiş lezyonlar içeren PSMA-PET-CT-Lesions koleksiyonu (Jeblick
+vd., 2026) kullanılacaktır; bu koleksiyon, ABD Ulusal Sağlık Enstitüleri (NIH) tarafından
+desteklenen The Cancer Imaging Archive (TCIA) deposunda yayımlanmaktadır (Clark vd., 2013).
+Tracer genellenebilirliği DEEP-PSMA'daki aynı hastaların FDG taramaları üzerinde, gerektiğinde
+açık FDG PET/BT veri setiyle (Gatidis vd., 2022) sınanacaktır. Bütün veri setleri
+anonimleştirilmiş ve araştırma amaçlı kullanım lisansıyla yayımlanmıştır. Kurumsal (hastane)
+verisi ancak etik kurul onayı alındıktan sonra yalnızca dış doğrulama amacıyla kullanılacaktır.
+
+\subsection{Ön işleme ve kalite kontrolü (İP1)}
+PET voksel değerleri vücut ağırlığına göre SUV'ye çevrilecektir. Her hasta bölünmeye girmeden
+önce bir kalite kontrol kapısından geçecek; PET/BT yön tutarsızlığı, sayısal olmayan veya negatif
+SUV ve 40'tan az kesit dışlama nedenidir ve her dışlama gerekçesiyle kaydedilecektir. SUV
+dönüşümü, FDG taramalarında karaciğer SUVmean değerinin fizyolojik aralıkta (1,3--3,0) olmasıyla
+doğrulanacaktır (Boellaard vd., 2015). PSMA'da karaciğer tutulumu tümör yükü arttıkça düştüğü
+için (tümör ``sink'' etkisi; Gafita vd., 2022) karaciğer değeri kaydedilecek ancak eleme ölçütü
+olarak kullanılmayacak, PSMA taraması aynı hastanın FDG taraması üzerinden kontrol edilecek ve
+böbrek ile mesanenin en parlak yapılar olması ayrıca denetlenecektir. BT, PET ızgarasına yeniden
+örneklenecek (tersi değil, çünkü düşük çözünürlüklü PET'i büyütmek yapay bilgi üretir) ve aynı
+seansta elde edildiği için deformable kayıt yapılmayacaktır. BT değerleri $[-1000, +1000]$~HU
+aralığında kırpılıp $[-1, 1]$ aralığına, PET ise $\log(1 + \mathrm{SUV})/\log(1 + 50)$
+dönüşümüyle ölçeklenecektir; hasta bazında min-maks normalizasyon, SUV'nin mutlak anlamını
+bozacağı için kullanılmayacaktır. Bütün metrikler ters dönüşümle SUV uzayında hesaplanacaktır.
+Vücut maskesi BT'de $-500$~HU eşiği ve en büyük bağlı bileşenle, mesane maskesi ise
+TotalSegmentator ile (Wasserthal vd., 2023) elde edilecektir. Veri, komşu kesitlerin test
+kümesine sızmasını önlemek için kesit düzeyinde değil hasta düzeyinde, toplam tümör hacminin
+üçte birlik dilimlerine göre katmanlanarak ve sabit bir tohumla bölünecek; bölünme dosyası bir
+kez yazıldıktan sonra değiştirilmeyecektir.
+
+\subsection{Bozunum modeli (İP1)}
+Kalın kesit, $k$ ardışık ince kesitin ortalaması olarak üretilecektir:
+\[
+  y_j = \frac{1}{k} \sum_{i=0}^{k-1} x_{jk+i}.
+\]
+Bu, tarayıcının kesit kalınlığı boyunca sayımları toplamasının bir modelidir; literatürde sık
+kullanılan kesit atlama (decimation) ise fiziksel olarak farklı bir problemi tanımlar ve
+kullanılmayacaktır. Hedef (yer gerçeği) tarayıcının ürettiği özgün ince kesitli hacimdir, yani
+model gerçek bir çekimi geri kazanmayı öğrenecektir. Test kümesinin bozunumları her eğitimde
+yeniden örneklenmeyecek, bir kez üretilip diske yazılacak ve dondurulacaktır.
+
+\subsection{Model merdiveni (İP3--İP4)}
+Literatürde kesit interpolasyonunda problem formülasyonunun mimariden daha belirleyici
+olabildiği bilindiğinden, merdivenin her basamağında aynı formülasyon sabit tutulacak ve
+formülasyon ayrıca ablate edilecektir. Ortalama tabanlı bozunumda hiçbir ince kesit ``eksik''
+değildir; her ince kesit ölçülmüş bir kalın kesitin içindedir. Bu nedenle temel birim blok
+olarak seçilmiştir: model bir kalın kesiti alır ve içindeki $k$ ince kesiti üretir. Basamak 0
+kübik spline interpolasyonudur ve tüm metrik altyapısının uçtan uca testi olarak da
+kullanılacaktır. Basamak 1, U-Net (Ronneberger vd., 2015) mimarisinin MONAI (Cardoso vd., 2022)
+gerçeklemesine dayanan 2.5 boyutlu rezidüel bir ağdır: girdi olarak hedef kalın kesit ve her iki
+yanındaki ikişer kalın PET kesiti, bloğu kapsayan BT kesitleri ve kübik tahmin verilir; ağ kübik
+tahmine eklenecek düzeltmeyi öğrenir. Son katman sıfırla başlatıldığından eğitilmemiş ağ tam
+olarak kübik taban çizgisine eşittir; böylece elde edilen her kazanç doğrudan öğrenmeye
+atfedilebilir. Bu basamak BT'li (erken füzyon) ve BT'siz olarak iki kolda eğitilecektir.
+Basamak 2'de BT kanalları yerine, 148.000 BT taraması üzerinde öz-denetimli olarak önceden
+eğitilmiş CT-FM temel modelinin (Pai vd., 2025) dondurulmuş kodlayıcısından alınan çok ölçekli
+öznitelikler, sıfırla başlatılmış $1 \times 1$ evrişimlerle U-Net kodlayıcısına eklenecektir;
+temel modelin kendi çözünürlüğünde (yaklaşık 1~mm) beslenmesinin etkisi ayrıca sınanacaktır.
+Basamak 3 projenin özgün katkısıdır: PET ve BT için iki ayrı kodlayıcı kullanılacak, kod
+çözücünün her ölçeğinde PET öznitelikleri sorgu (query), BT öznitelikleri anahtar ve değer
+(key/value) olacak şekilde çok başlıklı çapraz dikkat blokları (Vaswani vd., 2017)
+yerleştirilecek, bellek gereksinimini sınırlamak için Swin UNETR'deki gibi pencereli dikkat
+(Hatamizadeh vd., 2022) kullanılacaktır. Gerekçe, kanal birleştirmenin BT'nin keskin anatomik
+sınır bilgisini derin katmanlara taşıyamaması, çapraz dikkatin ise PET'in ``nereye bakacağını''
+anatomiden öğrenebilmesidir. Zaman kalması hâlinde Basamak 4 olarak kod çözücü, koordinat
+koşullu örtük bir fonksiyona (LIIF/ArSSR yaklaşımı; Chen vd., 2021; Wu vd., 2023) çevrilerek
+$k = 2$, 3, 4 ve kesirli faktörleri tek modelle çözen ölçekten bağımsız bir sürüm denenecektir.
+Hayali SUV değerleri üretme riski klinik olarak savunulamayacağı için çekişmeli (GAN) kayıp
+kullanılmayacaktır.
+
+\subsection{Ölçüm tutarlılığı (tüm basamaklar)}
+Her modelin çıktısı, sentezlenen ince kesitlerin $k$'lı ortalaması ölçülen kalın kesite tam
+olarak eşit olacak biçimde izdüşürülecektir:
+\[
+  \hat{x} \leftarrow \hat{x} + U\bigl(y - A\hat{x}\bigr).
+\]
+Burada $A$, $k$'lı ortalama işlecini, $U$ ise her kalın kesit değerini $k$ ince kesite kopyalayan
+büyütme işlecini gösterir. Bu yaklaşım, MR geriçatımında derin ağlara eklenen veri tutarlılığı
+katmanlarıyla (Schlemper vd., 2018) aynı ilkeye dayanır ve modelin ölçülen veriyle çelişen bir
+sonuç üretmesini yapısal olarak engeller.
+
+\subsection{Literatür yöntemleriyle karşılaştırma (İP2)}
+SAINT ve I$^3$Net yazarlarının açık kodları bu projenin veri yükleyicisine bağlanacak ve kendi
+yayınlarındaki kesit atlama protokolü yerine bu projenin ortalama tabanlı bozunumu, aynı bölünme
+ve aynı metrik koduyla yeniden eğitilecektir; aksi hâlde karşılaştırma adil olmaz. RIFE ve FILM
+önce önceden eğitilmiş ağırlıklarla, eğitimsiz olarak ardışık PET kesit çiftlerine uygulanacak,
+ardından aynı koşullarda ince ayar yapılacaktır. Tüm yöntemler tek bir değerlendirme arayüzünden
+geçirilecek; girdi düşük çözünürlüklü hacim ve BT, çıktı yüksek çözünürlüklü hacimdir.
+
+\subsection{Eğitim (İP3--İP4)}
+Kayıp fonksiyonu, görüntü onarımı için önerilen $0{,}84 \cdot (1 - \text{MS-SSIM}) + 0{,}16 \cdot
+L_1$ birleşimidir (Zhao vd., 2017; Wang vd., 2003); saf SSIM ailesi kayıpların kararsızlığı
+nedeniyle $L_1$ terimi korunacak, az sayıdaki lezyon vokselinin toplam kayıp içinde
+kaybolmaması için $L_1$ lezyon voksellerinde 5 kat ağırlıklandırılacaktır. Ağlar PyTorch (Paszke
+vd., 2019) ile, AdamW (Loshchilov ve Hutter, 2019) optimize edicisi ve kosinüs öğrenme hızı
+azaltımıyla (Loshchilov ve Hutter, 2017) eğitilecektir. Veri artırma yalnızca sağ-sol çevirme ve
+düzlem içi döndürmeyle sınırlı tutulacak, problem z yönünde tanımlı olduğu için z yönünde artırma
+yapılmayacaktır. Model seçimi doğrulama kümesi üzerinden yapılacak; test kümesi her dondurulmuş
+tasarım için yalnızca bir kez okunacak ve hipotezler sonuçlar görülmeden önce deney günlüğüne
+yazılacaktır. Tohum varyansını ayırmak için her kol her faktörde en az üç tohumla
+eğitilecektir.
+
+\subsection{Değerlendirme ve istatistiksel yöntemler (İP3--İP5)}
+Global metrikler (PSNR, SSIM, NRMSE; Wang vd., 2004), havanın metrikleri yapay olarak
+şişirmemesi için yalnızca vücut maskesi içinde hesaplanacaktır. Lezyonlar TTB kontürlerinin
+26-komşuluklu bağlı bileşenleri olarak tanımlanacak; her lezyon için SUVmax sapması
+\[
+  \frac{\mathrm{SUVmax}_{\text{tahmin}} - \mathrm{SUVmax}_{\text{gerçek}}}{\mathrm{SUVmax}_{\text{gerçek}}}
+\]
+hesaplanacak, ortalama ve \%95 güven aralığıyla ve Bland-Altman
+grafikleriyle (Bland ve Altman, 1986) raporlanacaktır. 1~mL'den küçük lezyonlar ve mesaneye
+2~cm'den yakın lezyonlar ayrı alt gruplar olarak raporlanacaktır; ikincisi, PSMA'da çok parlak
+olan mesanenin komşu kesitlere ``sızma'' hatasının test edildiği yerdir. Sonuçlar ayrıca
+hastaların özgün kesit aralığına göre (1,5--5~mm) kırılacaktır. Klinik görev değerlendirmesinde
+nnU-Net (Isensee vd., 2021) tabanlı bir lezyon segmentasyon modeli gerçek ve sentezlenmiş PET
+üzerinde çalıştırılıp Dice ve lezyon tespit farkları ölçülecektir. Bütün karşılaştırmalar hasta
+düzeyinde eşleştirilmiş Wilcoxon işaretli sıralar testiyle (Wilcoxon, 1945) yapılacak, çoklu
+karşılaştırmalar Bonferroni yöntemiyle (Dunn, 1961) düzeltilecektir; birden çok tohumla eğitilen
+kollar için önce her hastanın metrikleri tohumlar üzerinden ortalanacaktır. En kötü sonuç veren
+beş vaka ayrıca görsel olarak incelenecektir.
+
+\subsection{Tekrarlanabilirlik}
+Her deney, yol, hiperparametre, tohum ve bölünme dosyasını içeren sürümlenmiş bir yapılandırma
+dosyasından üretilecek; her koşu kendi yapılandırma kopyasını, kod sürümünü ve çalışma ağacının
+temiz olup olmadığını arşivleyecektir. Bulut ortamındaki oturum kesintilerine karşı uzun aşamalar
+hasta başına çıktı yazıp tamamlananları atlayarak, eğitim ise her dönemde (epoch) kontrol noktası
+kaydederek kaldığı yerden sürdürülecektir. Tablolar ve şekiller elle değil, metrik dosyalarından
+betiklerle üretilecektir.
+
+\subsection{Ön çalışma ve fizibilite}
+Yöntemin uygulanabilirliğini sınamak için DEEP-PSMA kohortunun 100 PSMA taraması ön işlenmiş,
+tamamı kalite kontrol kapısından geçmiş ve hasta düzeyinde 70/9/21 bölünme dondurulmuştur.
+$k = 2$'de yürütülen pilot deneyde 21 test hastasında (1.508 lezyon), ölçüm tutarlılığı
+sonrasında kübik spline lezyon SUVmax değerini ortalama \%13,2, 1~mL'den küçük lezyonlarda
+\%15,7 düşük ölçerken BT'siz 2.5B U-Net bu sapmayı sırasıyla yaklaşık \%2 ve \%5,5'e indirmiş,
+PSNR'yi 55,5~dB'den 57,4~dB'ye yükseltmiştir. BT'nin girdi kanallarına eklenmesi (erken füzyon)
+ise beklenenin aksine iyileşme sağlamamıştır: üç tohumun ortalamasında BT'siz model 21 hastanın
+20'sinde daha yüksek PSNR vermiştir (Bonferroni düzeltmeli $p < 0{,}001$). Kübik
+interpolasyonun $k = 4$'te lezyon SUVmax değerini ortalama \%34,5 düşük ölçmesi, problemin
+seyrekleşme arttıkça ağırlaştığını göstermektedir. Bu bulgular hem hattın uygulanabilirliğini
+hem de projenin ana sorusunu, yani BT bilgisinin ağa hangi yolla aktarılması gerektiğini
+doğrudan desteklemektedir. Pilot sonuçlar Bölüm~\ref{sec:diger}'teki tabloda özetlenmiştir.
+
+\Needspace{18\baselineskip}
+\section{Proje Yönetimi}
+
+\subsection{Çalışma Takvimi}
+
+{\small
+\begin{longtable}{@{}L{0.6cm}L{4.2cm}L{3.0cm}L{1.4cm}L{4.3cm}@{}}
+\toprule
+İP No & İş Paketinin Adı ve Hedefleri & Kim(ler) Tarafından Gerçekleştirileceği & Zaman Aralığı (Ay)
+  & Başarı Ölçütü ve Projenin Başarısına Katkısı \\
+\midrule
+\endhead
+1 & Veri hattı, kalite kontrolü ve bozunum: SUV dönüşümü, BT'nin PET ızgarasına örneklenmesi,
+  hasta düzeyinde bölünme, $k = 2$, 3, 4 test bozunumlarının dondurulması, kübik taban çizgisi ve
+  metrik altyapısı (Hedef 1)
+  & Proje yürütücüsü, Proje ortağı 1 & 1--2
+  & Kohortun tamamı için kalite kontrol raporu ve dışlama gerekçeleri; dondurulmuş bölünme ve
+  bozunum dosyaları; kübik interpolasyonun üç faktördeki metrikleri. Katkı: \%15 \\
+2 & Literatür yöntemlerinin uyarlanması: SAINT ve I$^3$Net'in ortalama tabanlı bozunumla yeniden
+  eğitilmesi, RIFE ve FILM'in eğitimsiz ve ince ayarlı çalıştırılması (Hedef 2)
+  & Proje ortağı 1, Proje ortağı 2 & 3--4
+  & 4 yöntem $\times$ 3 faktörün ortak metrik koduyla değerlendirilmesi ve karşılaştırma
+  tablosunun doldurulması. Katkı: \%15 \\
+3 & Model merdiveni: BT'siz ve erken füzyonlu 2.5B U-Net ile BT temel modeli öznitelikli U-Net,
+  her faktörde $\geq 3$ tohum (Hedef 3, H1)
+  & Proje yürütücüsü, Proje ortağı 2 & 5--6
+  & Öğrenmeli modelin kübik interpolasyona göre hasta düzeyinde anlamlı üstünlüğü (Bonferroni
+  sonrası $p < 0{,}05$); BT'li ve BT'siz kollar arasındaki farkın test edilmesi. Katkı: \%20 \\
+4 & Özgün çapraz dikkat modeli ve ablasyonlar: füzyon türü, girdi formülasyonu, kayıp
+  bileşenleri, ölçüm tutarlılığı; opsiyonel ölçekten bağımsız sürüm (Hedef 4, H2, H3)
+  & Proje yürütücüsü, Proje ortağı 1, Proje ortağı 2 & 7--10
+  & $k = 4$'te BT'siz U-Net'e karşı PSNR'de anlamlı üstünlük; 1~mL altı lezyonlarda SUVmax
+  düşük ölçümünün kübik interpolasyona göre en az \%40 azaltılması; ablasyon tablosu.
+  Katkı: \%30 \\
+5 & Genellenebilirlik ve klinik görev değerlendirmesi: farklı merkezden PSMA verisinde dış test,
+  FDG ile tracer değişimi testi, segmentasyon tabanlı görev değerlendirmesi, hata vakası analizi
+  (Hedef 5)
+  & Proje ortağı 2, Proje yürütücüsü & 11--12
+  & Dış test ve tracer değişimi sonuçlarının raporlanması; gerçek ve sentezlenmiş PET üzerindeki
+  segmentasyon Dice farkı; en kötü beş vakanın analizi. Katkı: \%20 \\
+\bottomrule
+\end{longtable}
+}
+
+\Needspace{12\baselineskip}
+\subsection{Risk Yönetimi}
+
+{\small
+\begin{longtable}{@{}L{1.0cm}L{5.0cm}L{8.0cm}@{}}
+\toprule
+İP No & En Önemli Riskler & Risk Yönetimi (B Planı) \\
+\midrule
+\endhead
+1 & Yeni eklenen veri kümelerinde SUV dönüşümünün hatalı olması (bozunma düzeltmesi, enjekte doz
+  veya kilo birimi)
+  & Kalite kontrol kapısı, FDG'de karaciğer SUVmean kontrolü ve PSMA'da böbrek/mesane parlaklık
+  sırası kontrolü uygulanır; sorunlu hastalar gerekçesiyle dışlanır ve kayda geçirilir.
+  Hedeflerden sapma olmaz. \\
+2 & Literatür yöntemlerinin açık kodlarının bu veriye veya ortalama tabanlı bozunuma
+  uyarlanamaması
+  & Yöntem, yayımlanmış mimarisine sadık kalınarak projenin kendi eğitim çerçevesinde yeniden
+  gerçeklenir. Bir yöntem yine de çalıştırılamazsa nedeni raporlanır ve karşılaştırma kalan
+  yöntemlerle yapılır; RIFE ve FILM'in eğitimsiz uygulanması her durumda mümkündür. \\
+3, 4 & GPU hesaplama kotasının yetersiz kalması veya bulut oturumlarının kesilmesi
+  & Tüm aşamalar kaldığı yerden sürdürülebilir tasarlanmıştır. Gerektiğinde karışık duyarlıklı
+  eğitim, daha küçük yamalar ve temel modelin PET ızgarasındaki (daha ucuz) sürümü kullanılır;
+  deneyler en bilgilendirici faktör olan $k = 4$'ten başlanarak sıralanır. Yöntem değişikliği
+  gerekmez. \\
+4 & Çapraz dikkat modelinin BT'siz modeli geçememesi
+  & Bu sonuç araştırma sorusunun bilimsel bir cevabıdır ve hasta düzeyi istatistiklerle
+  raporlanır. B planı olarak BT temel modelinin ince ayarı ve BT'nin yalnızca lezyon/mesane
+  sınırları gibi seçilmiş bölgelerde kullanıldığı bir dikkat maskesi denenir; bu durumda yöntem
+  değişikliği Bölüm~2.5'teki merdivene eklenen yeni bir basamak olarak tanımlanır ve temel
+  hedefler değişmez. \\
+4 & Yaklaşık 70 eğitim hastasıyla aşırı öğrenme
+  & Rezidüel ve sıfırla başlatılmış tasarım, doğrulama kümesiyle model seçimi ve çoklu tohum
+  uygulanır; gerekirse farklı merkezin PSMA verisinin bir bölümü eğitime eklenir ve dış test
+  kalan hastalarla yapılır. \\
+5 & Kurumsal veriye erişimin veya etik kurul onayının gecikmesi
+  & Dış doğrulama, farklı bir merkezde çekilmiş açık PSMA-PET-CT-Lesions koleksiyonuyla yapılır;
+  kurumsal veri yalnızca ek doğrulama olarak planlanmıştır. Hedeflerden sapma olmaz. \\
+Tümü & Bir ekip üyesinin projeden ayrılması
+  & Kod, yapılandırmalar ve deney günlüğü ortak bir sürüm kontrol deposunda tutulur; her iş
+  paketinde en az iki kişi görevlidir. \\
+\bottomrule
+\end{longtable}
+}
+
+\subsection{Araştırma Olanakları}
+
+{\small
+\begin{tabularx}{\textwidth}{@{}YY@{}}
+\toprule
+Kuruluşta Bulunan Altyapı / Ekipman Türü & Projede Kullanım Amacı \\
+\midrule
+{[ÜNİVERSİTE]} Bilgisayar Mühendisliği Bölümü öğrenci laboratuvarları ve kampüs ağı
+  & Geliştirme, kod incelemesi ve ekip toplantıları \\
+{[Varsa: bölümün/fakültenin GPU sunucusu veya hesaplama kümesi]}
+  & Çapraz dikkat modeli ve temel model deneyleri gibi yüksek bellek gerektiren eğitimler \\
+Ekip üyelerine ait GPU'lu iş istasyonları (12--16~GB grafik belleği)
+  & Kısa deneyler, hata ayıklama, çıkarım ve metrik hesapları \\
+Bulut tabanlı GPU hesaplama ve bulut depolama hizmeti (proje bütçesinden)
+  & Ana eğitim koşuları; ham ve işlenmiş verinin, kontrol noktalarının ve koşu arşivlerinin ekip
+  arasında paylaşımlı saklanması \\
+Açık kaynak yazılımlar (PyTorch, MONAI, SimpleITK, TotalSegmentator)
+  & Model geliştirme, görüntü işleme ve organ maskeleri \\
+\bottomrule
+\end{tabularx}
+}
+
+\section{Araştırma Önerisinin Yaygın Etkisi}
+
+{\small
+\begin{tabularx}{\textwidth}{@{}L{4.5cm}Y@{}}
+\toprule
+Yaygın Etki Türü & Önerilen Araştırmadan Beklenen Çıktı, Sonuç ve Etkiler \\
+\midrule
+Bilimsel / Akademik Çıktılar (Ulusal/Uluslararası Makale, Bildiri, Kitap Bölümü vb.)
+  & En az bir uluslararası tıbbi görüntüleme konferansına (ör. SPIE Medical Imaging, IEEE ISBI
+  veya MICCAI çalıştayları) bildiri; nükleer tıp fiziği veya tıbbi fizik alanında SCI-E
+  kapsamlı bir dergiye (ör. EJNMMI Physics, Medical Physics) makale taslağı; ulusal bir
+  kongrede (ör. Ulusal Nükleer Tıp Kongresi veya SIU) Türkçe bildiri. PET kesit
+  interpolasyonu için ortalama tabanlı bozunum ve lezyon düzeyi değerlendirme protokolü,
+  sonraki çalışmaların kullanabileceği bir karşılaştırma standardı olarak sunulacaktır. \\
+Ekonomik / Ticari / Sosyal Çıktılar (Ürün, Prototip, Yazılım, Veri Tabanı vb.)
+  & Açık kaynak lisanslı yazılım: ön işleme ve kalite kontrol hattı, dondurulmuş bölünme ve
+  bozunum protokolü, eğitilmiş model ağırlıkları ve değerlendirme betikleri. Uzun vadede
+  yöntem, PET çekim süresini veya hasta dozunu artırmadan küçük lezyonların daha doğru
+  ölçülmesine, bu sayede evreleme ve radyoligand tedavisine hasta seçiminde daha güvenilir
+  nicel karar verilmesine katkı sağlayabilecektir. Kısa protokollerin hasta konforunu ve cihaz
+  kapasitesini artırması dolaylı bir sosyal ve ekonomik etkidir. \\
+Araştırmacı Yetiştirilmesi ve Yeni Proje(ler) Oluşturma
+  & Üç lisans öğrencisinin tıbbi görüntü analizi, derin öğrenme ve tekrarlanabilir araştırma
+  pratiklerinde deneyim kazanması; ekip üyelerinin lisansüstü çalışmalarına (yüksek lisans
+  tezi) zemin oluşturması. Sonuçların, kurumsal PSMA verisiyle dış doğrulama ve klinik okuyucu
+  çalışmasını içeren daha kapsamlı bir TÜBİTAK projesi (ör. 1001 veya 3501) başvurusunun ön
+  verisi olarak kullanılması. \\
+\bottomrule
+\end{tabularx}
+}
+
+\Needspace{16\baselineskip}
+\section{Belirtmek İstediğiniz Diğer Konular}\label{sec:diger}
+
+Ön çalışma sonuçları ($k = 2$, DEEP-PSMA, 21 test hastası, 1.508 lezyon; ölçüm tutarlılığı
+sonrası, ortalama $\pm$ standart sapma).
+
+{\small
+\begin{tabularx}{\textwidth}{@{}YL{2.6cm}L{3.2cm}L{3.6cm}@{}}
+\toprule
+Model & PSNR (dB) & Lezyon SUVmax sapması (\%) & 1~mL altı lezyonlarda SUVmax sapması (\%) \\
+\midrule
+Kübik spline & $55{,}46 \pm 7{,}44$ & $-13{,}2 \pm 11{,}1$ & $-15{,}7 \pm 11{,}0$ \\
+2.5B U-Net, BT'siz (3 tohum) & 57,43 -- 57,53 & $-1{,}8$ ile $-2{,}3$ & $-5{,}2$ ile $-5{,}8$ \\
+2.5B U-Net, BT erken füzyon (3 tohum) & 56,77 -- 57,18 & $-3{,}4$ ile $-3{,}5$ & $-7{,}1$ ile $-7{,}7$ \\
+\bottomrule
+\end{tabularx}
+}
+
+\paragraph{Etik.} Projede kullanılacak bütün veri setleri anonimleştirilmiş ve araştırma amaçlı
+kullanım lisansıyla kamuya açık olarak yayımlanmıştır; hastalarla doğrudan temas veya yeni
+görüntü çekimi yoktur. Bu nedenle üniversitenin etik kurulundan muafiyet belgesi alınması
+planlanmaktadır. Kurumsal verinin kullanılması durumunda ilgili etik kurul onayı veri
+kullanımından önce alınacaktır.
+
+\paragraph{Üretken yapay zekâ kullanımı.} [EKİP TARAFINDAN DOLDURULACAK: ``TÜBİTAK Destek
+Süreçlerinde Üretken Yapay Zekânın Sorumlu ve Güvenilir Kullanımı Rehberi'' uyarınca, proje
+metninin hazırlanmasında üretken yapay zekâ araçlarından hangi amaçla yararlanıldığı ve içeriğin
+ekip ile danışman tarafından kontrol edildiği beyan edilecektir.]
+
+\section{Ekler}
+
+Bu başvuruda ek bulunmamaktadır.
+
+\section*{Kaynaklar}
+
+\begin{list}{}{\setlength{\leftmargin}{1.5em}\setlength{\itemindent}{-1.5em}%
+  \setlength{\itemsep}{0.25\baselineskip}\setlength{\parsep}{0pt}}\small
+
+\item Bland, J. M. ve Altman, D. G. 1986. ``Statistical methods for assessing agreement between two
+methods of clinical measurement'', \emph{The Lancet}, 327(8476), 307--310.
+\doi{10.1016/S0140-6736(86)90837-8}
+
+\item Ben-Cohen, A., Klang, E., Raskin, S. P. vd. 2019. ``Cross-modality synthesis from CT to PET
+using FCN and GAN networks for improved automated lesion detection'', \emph{Engineering
+Applications of Artificial Intelligence}, 78, 186--194. \doi{10.1016/j.engappai.2018.11.013}
+
+\item Boellaard, R., Delgado-Bolton, R., Oyen, W. J. G. vd. 2015. ``FDG PET/CT: EANM procedure
+guidelines for tumour imaging: version 2.0'', \emph{European Journal of Nuclear Medicine and
+Molecular Imaging}, 42(2), 328--354. \doi{10.1007/s00259-014-2961-x}
+
+\item Buteau, J. P., Martin, A. J., Emmett, L. vd. 2022. ``PSMA and FDG-PET as predictive and
+prognostic biomarkers in patients given [$^{177}$Lu]Lu-PSMA-617 versus cabazitaxel for metastatic
+castration-resistant prostate cancer (TheraP): a biomarker analysis from a randomised, open-label,
+phase 2 trial'', \emph{The Lancet Oncology}, 23(11), 1389--1397.
+\doi{10.1016/S1470-2045(22)00605-2}
+
+\item Cardoso, M. J., Li, W., Brown, R. vd. 2022. ``MONAI: An Open-Source Framework for Deep
+Learning in Healthcare'', arXiv:2211.02701. \doi{10.48550/arXiv.2211.02701}
+
+\item Chen, Y., Liu, S. ve Wang, X. 2021. ``Learning Continuous Image Representation with Local
+Implicit Image Function'', \emph{2021 IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR)}, 8624--8634. \doi{10.1109/CVPR46437.2021.00852}
+
+\item Clark, K., Vendt, B., Smith, K. vd. 2013. ``The Cancer Imaging Archive (TCIA): Maintaining
+and Operating a Public Information Repository'', \emph{Journal of Digital Imaging}, 26(6),
+1045--1057. \doi{10.1007/s10278-013-9622-7}
+
+\item Dunn, O. J. 1961. ``Multiple Comparisons among Means'', \emph{Journal of the American
+Statistical Association}, 56(293), 52--64. \doi{10.1080/01621459.1961.10482090}
+
+\item Endo, H., Hirata, K., Magota, K. vd. 2025. ``Development and validation of 3D
+super-resolution convolutional neural network for $^{18}$F-FDG-PET images'', \emph{EJNMMI Physics},
+12(1), 77. \doi{10.1186/s40658-025-00791-y}
+
+\item Fendler, W. P., Eiber, M., Beheshti, M. vd. 2023. ``PSMA PET/CT: joint EANM procedure
+guideline/SNMMI procedure standard for prostate cancer imaging 2.0'', \emph{European Journal of
+Nuclear Medicine and Molecular Imaging}, 50(5), 1466--1486. \doi{10.1007/s00259-022-06089-w}
+
+\item Ferdinandus, J., Violet, J., Sandhu, S. vd. 2020. ``Prognostic biomarkers in men with
+metastatic castration-resistant prostate cancer receiving [$^{177}$Lu]-PSMA-617'',
+\emph{European Journal of Nuclear Medicine and Molecular Imaging}, 47(10), 2322--2327.
+\doi{10.1007/s00259-020-04723-z}
+
+\item Gafita, A., Wang, H., Robertson, A. vd. 2022. ``Tumor Sink Effect in $^{68}$Ga-PSMA-11 PET:
+Myth or Reality?'', \emph{Journal of Nuclear Medicine}, 63(2), 226--232.
+\doi{10.2967/jnumed.121.261906}
+
+\item Gatidis, S., Hepp, T., Früh, M. vd. 2022. ``A whole-body FDG-PET/CT Dataset with manually
+annotated Tumor Lesions'', \emph{Scientific Data}, 9(1), 601. \doi{10.1038/s41597-022-01718-3}
+
+\item Hatamizadeh, A., Nath, V., Tang, Y. vd. 2022. ``Swin UNETR: Swin Transformers for Semantic
+Segmentation of Brain Tumors in MRI Images'', \emph{Brainlesion: Glioma, Multiple Sclerosis,
+Stroke and Traumatic Brain Injuries (BrainLes 2021)}, Lecture Notes in Computer Science, 12962,
+272--284. \doi{10.1007/978-3-031-08999-2_22}
+
+\item Hofman, M. S., Lawrentschuk, N., Francis, R. J. vd. 2020. ``Prostate-specific membrane
+antigen PET-CT in patients with high-risk prostate cancer before curative-intent surgery or
+radiotherapy (proPSMA): a prospective, randomised, multicentre study'', \emph{The Lancet},
+395(10231), 1208--1216. \doi{10.1016/S0140-6736(20)30314-7}
+
+\item Huang, Z., Zhang, T., Heng, W. vd. 2022. ``Real-Time Intermediate Flow Estimation for Video
+Frame Interpolation'', \emph{Computer Vision -- ECCV 2022}, Lecture Notes in Computer Science,
+13674, 624--642. \doi{10.1007/978-3-031-19781-9_36}
+
+\item Isensee, F., Jaeger, P. F., Kohl, S. A. A. vd. 2021. ``nnU-Net: a self-configuring method
+for deep learning-based biomedical image segmentation'', \emph{Nature Methods}, 18(2), 203--211.
+\doi{10.1038/s41592-020-01008-z}
+
+\item Jackson, P., Hofman, M., Buteau, J. P., McIntosh, L. ve Sun, Y. 2025. ``A Repository of
+Annotated PSMA and FDG PET/CT Images for Algorithm Development in Staging of mCRPC for Treament
+[sic] with 177Lu-PSMA Therapy'' [Veri seti], Zenodo. \doi{10.5281/zenodo.15281784}
+
+\item Jeblick, K., Schachtner, B., Mittermeier, A. vd. 2026. ``A whole-body PSMA-PET/CT dataset
+with manually annotated tumor lesions (PSMA-PET-CT-Lesions)'' (Sürüm 2) [Veri seti], The Cancer
+Imaging Archive. \doi{10.7937/r7ep-3x37}
+
+\item Koopman, D., van Dalen, J. A., Lagerweij, M. C. M. vd. 2015. ``Improving the Detection of
+Small Lesions Using a State-of-the-Art Time-of-Flight PET/CT System and Small-Voxel
+Reconstructions'', \emph{Journal of Nuclear Medicine Technology}, 43(1), 21--27.
+\doi{10.2967/jnmt.114.147215}
+
+\item Liu, J., Malekzadeh, M., Mirian, N. vd. 2021. ``Artificial Intelligence-Based Image
+Enhancement in PET Imaging: Noise Reduction and Resolution Enhancement'', \emph{PET Clinics},
+16(4), 553--576. \doi{10.1016/j.cpet.2021.06.005}
+
+\item Loshchilov, I. ve Hutter, F. 2017. ``SGDR: Stochastic Gradient Descent with Warm Restarts'',
+\emph{International Conference on Learning Representations (ICLR 2017)}. arXiv:1608.03983
+
+\item Loshchilov, I. ve Hutter, F. 2019. ``Decoupled Weight Decay Regularization'',
+\emph{International Conference on Learning Representations (ICLR 2019)}. arXiv:1711.05101
+
+\item Pai, S., Hadzic, I., Bontempi, D. vd. 2025. ``Vision Foundation Models for Computed
+Tomography'', arXiv:2501.09001. \doi{10.48550/arXiv.2501.09001}
+
+\item Paszke, A., Gross, S., Massa, F. vd. 2019. ``PyTorch: An Imperative Style,
+High-Performance Deep Learning Library'', \emph{Advances in Neural Information Processing Systems
+32 (NeurIPS 2019)}.
+
+\item Peng, C., Lin, W.-A., Liao, H. vd. 2020. ``SAINT: Spatially Aware Interpolation NeTwork for
+Medical Slice Synthesis'', \emph{2020 IEEE/CVF Conference on Computer Vision and Pattern
+Recognition (CVPR)}, 7747--7756. \doi{10.1109/CVPR42600.2020.00777}
+
+\item Reda, F., Kontkanen, J., Tabellion, E. vd. 2022. ``FILM: Frame Interpolation for Large
+Motion'', \emph{Computer Vision -- ECCV 2022}, Lecture Notes in Computer Science, 13667,
+250--266. \doi{10.1007/978-3-031-20071-7_15}
+
+\item Ronneberger, O., Fischer, P. ve Brox, T. 2015. ``U-Net: Convolutional Networks for
+Biomedical Image Segmentation'', \emph{Medical Image Computing and Computer-Assisted Intervention
+-- MICCAI 2015}, Lecture Notes in Computer Science, 9351, 234--241.
+\doi{10.1007/978-3-319-24574-4_28}
+
+\item Sanayi ve Teknoloji Bakanlığı. 2025. ``2030 Sanayi ve Teknoloji Stratejisi''.
+\url{https://www.sanayi.gov.tr/assets/pdf/plan-program/2030SanayiveTeknolojiStratejisi.pdf}
+Son erişim tarihi: 15 Kasım 2026.
+
+\item Sartor, O., de Bono, J., Chi, K. N. vd. 2021. ``Lutetium-177--PSMA-617 for Metastatic
+Castration-Resistant Prostate Cancer'', \emph{New England Journal of Medicine}, 385(12),
+1091--1103. \doi{10.1056/NEJMoa2107322}
+
+\item Schlemper, J., Caballero, J., Hajnal, J. V. vd. 2018. ``A Deep Cascade of Convolutional
+Neural Networks for Dynamic MR Image Reconstruction'', \emph{IEEE Transactions on Medical
+Imaging}, 37(2), 491--503. \doi{10.1109/TMI.2017.2760978}
+
+\item Song, H., Mao, X., Yu, J. vd. 2024. ``I$^3$Net: Inter-Intra-Slice Interpolation Network for
+Medical Slice Synthesis'', \emph{IEEE Transactions on Medical Imaging}, 43(9), 3306--3318.
+\doi{10.1109/TMI.2024.3394033}
+
+\item Song, T.-A., Chowdhury, S. R., Yang, F. ve Dutta, J. 2020. ``Super-Resolution PET Imaging
+Using Convolutional Neural Networks'', \emph{IEEE Transactions on Computational Imaging}, 6,
+518--528. \doi{10.1109/TCI.2020.2964229}
+
+\item Soret, M., Bacharach, S. L. ve Buvat, I. 2007. ``Partial-Volume Effect in PET Tumor
+Imaging'', \emph{Journal of Nuclear Medicine}, 48(6), 932--945. \doi{10.2967/jnumed.106.035774}
+
+\item Strateji ve Bütçe Başkanlığı. 2023. ``On İkinci Kalkınma Planı (2024--2028)''.
+\url{https://www.sbb.gov.tr/wp-content/uploads/2023/12/On-Ikinci-Kalkinma-Plani_2024-2028_11122023.pdf}
+Son erişim tarihi: 15 Kasım 2026.
+
+\item TÜBİTAK. 2025. ``Öncelikli Alanlar''.
+\url{https://tubitak.gov.tr/sites/default/files/2025-07/Oncelikli_Alanlar_2025-2.pdf}
+Son erişim tarihi: 15 Kasım 2026.
+
+\item Vaswani, A., Shazeer, N., Parmar, N. vd. 2017. ``Attention Is All You Need'', \emph{Advances
+in Neural Information Processing Systems 30 (NIPS 2017)}. arXiv:1706.03762
+
+\item Wang, Z., Bovik, A. C., Sheikh, H. R. ve Simoncelli, E. P. 2004. ``Image Quality Assessment:
+From Error Visibility to Structural Similarity'', \emph{IEEE Transactions on Image Processing},
+13(4), 600--612. \doi{10.1109/TIP.2003.819861}
+
+\item Wang, Z., Simoncelli, E. P. ve Bovik, A. C. 2003. ``Multiscale Structural Similarity for
+Image Quality Assessment'', \emph{The Thirty-Seventh Asilomar Conference on Signals, Systems \&
+Computers}, 1398--1402. \doi{10.1109/ACSSC.2003.1292216}
+
+\item Wasserthal, J., Breit, H.-C., Meyer, M. T. vd. 2023. ``TotalSegmentator: Robust
+Segmentation of 104 Anatomic Structures in CT Images'', \emph{Radiology: Artificial
+Intelligence}, 5(5), e230024. \doi{10.1148/ryai.230024}
+
+\item Wilcoxon, F. 1945. ``Individual Comparisons by Ranking Methods'', \emph{Biometrics
+Bulletin}, 1(6), 80--83. \doi{10.2307/3001968}
+
+\item Wu, Q., Li, Y., Sun, Y. vd. 2023. ``An Arbitrary Scale Super-Resolution Approach for 3D MR
+Images via Implicit Neural Representation'', \emph{IEEE Journal of Biomedical and Health
+Informatics}, 27(2), 1004--1015. \doi{10.1109/JBHI.2022.3223106}
+
+\item Zhao, C., Dewey, B. E., Pham, D. L. vd. 2021. ``SMORE: A Self-Supervised Anti-Aliasing and
+Super-Resolution Algorithm for MRI Using Deep Learning'', \emph{IEEE Transactions on Medical
+Imaging}, 40(3), 805--817. \doi{10.1109/TMI.2020.3037187}
+
+\item Zhao, H., Gallo, O., Frosio, I. ve Kautz, J. 2017. ``Loss Functions for Image Restoration
+With Neural Networks'', \emph{IEEE Transactions on Computational Imaging}, 3(1), 47--57.
+\doi{10.1109/TCI.2016.2644865}
+
+\end{list}
+
+\section*{Bütçe Talebi (TYBS bütçe adımı için öneri)}
+
+{\small
+\begin{tabularx}{\textwidth}{@{}L{2.6cm}L{3.6cm}Yr@{}}
+\toprule
+Gider Türü & Kalem & Gerekçe & Tutar (TL) \\
+\midrule
+Hizmet alımı & Bulut tabanlı GPU hesaplama hizmeti (12 ay)
+  & İP3--İP5'teki eğitim koşuları; çapraz dikkat ve temel model deneyleri yüksek bellekli GPU
+  gerektirir & [7.000] \\
+Hizmet alımı & Bulut depolama hizmeti (2~TB, 12 ay)
+  & Yaklaşık 40~GB ham veri, işlenmiş ve bozunmuş sürümler, kontrol noktaları ve koşu
+  arşivlerinin ekip arasında paylaşımı & [2.500] \\
+Sarf malzemesi & Harici SSD (2~TB)
+  & Verinin ve sonuçların yerel yedeği, bulut kesintilerinde yerel iş istasyonunda çalışma
+  & [2.500] \\
+\midrule
+ & & Toplam & [12.000] \\
+\bottomrule
+\end{tabularx}
+}
+
+\end{document}
